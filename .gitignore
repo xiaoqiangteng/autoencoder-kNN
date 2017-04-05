@@ -87,3 +87,15 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+
+# compressed file
+*.gz
+
+# Mac file
+.DS*
+
+
+
+
+
