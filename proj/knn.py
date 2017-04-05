@@ -1,6 +1,8 @@
 
 __author__ = 'Jinyi Zhang'
 
+import random
+
 from keras.datasets import mnist
 import numpy as np
 
@@ -15,10 +17,10 @@ class kNN(object):
 
         self.m = int(m * percentage)
 
-        self.x = x_train.reshape((m, w * h)).astype(np.float)[:self.m]
-        self.y = y_train[:self.m]
+        sel = random.sample(range(m), self.m)
 
-        print(y_train.shape)
+        self.x = x_train.reshape((m, w * h)).astype(np.float)[sel]
+        self.y = y_train[sel]
 
     @property
     def k(self):
@@ -46,14 +48,19 @@ class kNN(object):
 
         label_index_array = np.argmin(ed_matrix, axis=1)
 
-        pred = self.y[label_index_array]
+        preds = self.y[label_index_array]
 
+        correct_number = np.count_nonzero(preds == y_test)
+
+        accuracy = correct_number / m
+
+        print(accuracy)
 
 def main():
     k = 3
     knn = kNN(k)
 
-    knn.load_data(1)
+    knn.load_data(0.5)
 
     knn.evaluate(1)
 
