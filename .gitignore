@@ -95,6 +95,8 @@ ENV/
 # Mac file
 .DS*
 
+# Keras logs
+events.*
 
 
 
