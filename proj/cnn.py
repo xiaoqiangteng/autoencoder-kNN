@@ -16,7 +16,7 @@ class CNN(object):
     
     def __init__(self):
         self.batch_size = 128
-        self.epochs = 50
+        self.epochs = 10
 
         self.log_dir_path = './logs/cnn/'
         self.best_model_path = './models/cnn/weights.best.hdf5'
@@ -29,18 +29,18 @@ class CNN(object):
         kernel_size = (3, 3)
         pooling_size = (2, 2)
 
-        x = Conv2D(16, kernel_size, activation='relu', padding='same')(input_img)
+        x = Conv2D(500, kernel_size, activation='relu', padding='same')(input_img)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(8, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(200, kernel_size, activation='relu', padding='same')(x)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(8, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(32, kernel_size, activation='relu', padding='same')(x)
         encoded = MaxPooling2D(pooling_size, padding='same')(x)
 
-        x = Conv2D(8, kernel_size, activation='relu', padding='same')(encoded)
+        x = Conv2D(500, kernel_size, activation='relu', padding='same')(encoded)
         x = UpSampling2D(pooling_size)(x)
-        x = Conv2D(8, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(2000, kernel_size, activation='relu', padding='same')(x)
         x = UpSampling2D(pooling_size)(x)
-        x = Conv2D(16, kernel_size, activation='relu')(x)
+        x = Conv2D(32, kernel_size, activation='relu')(x)
         x = UpSampling2D(pooling_size)(x)
         decoded = Conv2D(1, kernel_size, activation='sigmoid', padding='same')(x)
 
@@ -52,14 +52,16 @@ class CNN(object):
         self.encoder = Model(input_img, encoded)
         self.autoencoder = autoencoder
 
-    def train(self):
-        (x_train, _), (x_test, _) = mnist.load_data()
+    def load_mnist_data(self):
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
         
         x_train = x_train.astype(np.float) / 255.
         x_test = x_test.astype(np.float) / 255.
         self.x_train = np.reshape(x_train, (len(x_train), self.img_rows, self.img_cols, 1))  # adapt this if using `channels_first` image data format
         self.x_test = np.reshape(x_test, (len(x_test), self.img_rows, self.img_cols, 1))
 
+    def train(self):
+        
         if os.path.isfile(self.best_model_path):
             self.load_weights()
             return
@@ -130,13 +132,14 @@ class CNN(object):
 def main():
     cnn = CNN()
 
+    cnn.load_mnist_data()
     cnn.train()
     cnn.evaluate()
 
     encoding_train = cnn.encode(cnn.x_train)
     encoding_test = cnn.encode(cnn.x_test)
 
-    # Save the encoded images
+    # Save the encoded tensors
     encoding_train_imgs_path = './data/MNIST/train.encoding'
     encoding_test_imgs_path = './data/MNIST/test.encoding'
 

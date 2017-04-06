@@ -31,12 +31,12 @@ class kNN(object):
         self.x = x_train.reshape((m, w * h)).astype(np.float)[sel]
         self.y = y_train[sel]
 
-        m, _, _ = x_test.shape
+        m = len(x_test)
         self.test_m = int(m * test_percentage)
         sel = random.sample(range(m), self.test_m)
 
-        self.x_test = x_test.reshape((m, w * h)).astype(np.float)
-        self.y_test = y_test[:m]
+        self.x_test = x_test.reshape((m, w * h)).astype(np.float)[sel]
+        self.y_test = y_test[sel]
 
 
     
@@ -62,7 +62,7 @@ class kNN(object):
 
         return accuracy
 
-def mnist_experiment(train_percentage, test_percentage, trial):
+def mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     knn = kNN()
     knn.load_mnist_data(train_percentage, test_percentage)
 
@@ -77,11 +77,50 @@ def mnist_experiment(train_percentage, test_percentage, trial):
 
         print(np.mean(np.array(acc_list)))
 
-def encoding_experiment(train_percentage, test_percentage, trial):
-    pass
+def encoding_experiment(trial, train_percentage=0.1, test_percentage=0.1):
+    encoding_train_imgs_path = './data/MNIST/train.encoding'
+    encoding_test_imgs_path = './data/MNIST/test.encoding'
+
+    encoding_train = pickle.load(open(encoding_train_imgs_path, 'rb'))
+    encoding_test = pickle.load(open(encoding_test_imgs_path, 'rb'))
+
+    print(encoding_train.shape)
+
+    # Load labels
+    (_, y_train), (_, y_test) = mnist.load_data()
+
+    m, w, h, l = encoding_train.shape
+    train_m = int(m * train_percentage)
+    sel = random.sample(range(m), train_m)
+    X = encoding_train.reshape((m, w * h * l)).astype(np.float)[sel]
+    y = y_train[sel]
+
+    m = len(encoding_test)
+    test_m = int(m * test_percentage)
+    sel = random.sample(range(m), test_m)
+
+    X_test = encoding_test.reshape((m, w * h * l)).astype(np.float)[sel]
+    y_test = y_test[sel]
+
+    knn = kNN()
+    k_valus = [1, 3, 5, 7]
+    for k in k_valus:
+        knn.k = k
+
+        acc_list = []
+        for _ in range(trial):
+            acc = knn.evaluate(X, y, X_test, y_test)
+            acc_list.append(acc)
+
+        print(np.mean(np.array(acc_list)))
 
 def main():
-    mnist_experiment(0.1, 0.1, 5)
+    train_percentage = 0.1
+    test_percentage = 0.1
+    trial = 5
+
+    mnist_experiment(trial, train_percentage, test_percentage)
+    encoding_experiment(trial, train_percentage, test_percentage)
     
 if __name__ == '__main__':
     main()
