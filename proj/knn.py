@@ -5,10 +5,11 @@ import random
 
 from keras.datasets import mnist
 import numpy as np
+from scipy.stats import mode
 
 class kNN(object):
 
-    def __init__(self, k):
+    def __init__(self, k=1):
         self._k = k
 
     def load_data(self, percentage=0.1):
@@ -43,26 +44,42 @@ class kNN(object):
         x_test = x_test.reshape((m, w * h)).astype(np.float)
 
         x_square = np.diag(np.dot(self.x, self.x.T))
-
         ed_matrix = (np.ones((len(x_test), 1)) * x_square.T) - 2 * (np.dot(x_test, self.x.T))
 
-        label_index_array = np.argmin(ed_matrix, axis=1)
+        if self._k == 1:
+            label_index_array = np.argmin(ed_matrix, axis=1)
+        else:
+            label_index_array = np.argpartition(ed_matrix, self._k, axis=1)[:, :self._k]
 
         preds = self.y[label_index_array]
+        if self._k != 1:
+            for i, p in enumerate(preds):
+                if len(np.unique(p)) == len(p):
+                    preds[i][-1] = preds[i][0]
+            preds = mode(preds.T).mode[0]
 
         correct_number = np.count_nonzero(preds == y_test)
 
         accuracy = correct_number / m
 
-        print(accuracy)
+        return accuracy
 
 def main():
-    k = 3
-    knn = kNN(k)
+    knn = kNN()
+    knn.load_data(0.1)
 
-    knn.load_data(0.5)
+    trial = 5
 
-    knn.evaluate(1)
+    k_valus = [1, 3, 5, 7]
+    for k in k_valus:
+        knn.k = k
+
+        acc_list = []
+        for _ in range(trial):
+            acc = knn.evaluate(1)
+            acc_list.append(acc)
+
+        print(np.mean(np.array(acc_list)))
 
 if __name__ == '__main__':
     main()
