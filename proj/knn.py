@@ -2,6 +2,7 @@
 __author__ = 'Jinyi Zhang'
 
 import random
+import pickle
 
 from keras.datasets import mnist
 import numpy as np
@@ -12,17 +13,6 @@ class kNN(object):
     def __init__(self, k=1):
         self._k = k
 
-    def load_data(self, percentage=0.1):
-        (x_train, y_train), _ = mnist.load_data()
-        m, w, h = x_train.shape
-
-        self.m = int(m * percentage)
-
-        sel = random.sample(range(m), self.m)
-
-        self.x = x_train.reshape((m, w * h)).astype(np.float)[sel]
-        self.y = y_train[sel]
-
     @property
     def k(self):
         return self._k
@@ -31,27 +21,35 @@ class kNN(object):
     def k(self, k): 
         self._k = k
 
-    def evaluate(self, percentage=0.01):
-        _, (x_test, y_test) = mnist.load_data()
+    def load_mnist_data(self, train_percentage=0.1, test_percentage=0.1):
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        
+        m, w, h = x_train.shape
+        self.train_m = int(m * train_percentage)
+        sel = random.sample(range(m), self.train_m)
 
-        total_m, w, h = x_test.shape
+        self.x = x_train.reshape((m, w * h)).astype(np.float)[sel]
+        self.y = y_train[sel]
 
-        m = int(total_m * percentage)
+        m, _, _ = x_test.shape
+        self.test_m = int(m * test_percentage)
+        sel = random.sample(range(m), self.test_m)
 
-        x_test = x_test[:m]
-        y_test = y_test[:m]
+        self.x_test = x_test.reshape((m, w * h)).astype(np.float)
+        self.y_test = y_test[:m]
 
-        x_test = x_test.reshape((m, w * h)).astype(np.float)
 
-        x_square = np.diag(np.dot(self.x, self.x.T))
-        ed_matrix = (np.ones((len(x_test), 1)) * x_square.T) - 2 * (np.dot(x_test, self.x.T))
+    
+    def evaluate(self, X, y, X_test, y_test):
+        x_square = np.diag(np.dot(X, X.T))
+        ed_matrix = (np.ones((len(X_test), 1)) * x_square.T) - 2 * (np.dot(X_test, X.T))
 
         if self._k == 1:
             label_index_array = np.argmin(ed_matrix, axis=1)
         else:
             label_index_array = np.argpartition(ed_matrix, self._k, axis=1)[:, :self._k]
 
-        preds = self.y[label_index_array]
+        preds = y[label_index_array]
         if self._k != 1:
             for i, p in enumerate(preds):
                 if len(np.unique(p)) == len(p):
@@ -60,15 +58,13 @@ class kNN(object):
 
         correct_number = np.count_nonzero(preds == y_test)
 
-        accuracy = correct_number / m
+        accuracy = correct_number / len(y_test)
 
         return accuracy
 
-def main():
+def mnist_experiment(train_percentage, test_percentage, trial):
     knn = kNN()
-    knn.load_data(0.1)
-
-    trial = 5
+    knn.load_mnist_data(train_percentage, test_percentage)
 
     k_valus = [1, 3, 5, 7]
     for k in k_valus:
@@ -76,11 +72,17 @@ def main():
 
         acc_list = []
         for _ in range(trial):
-            acc = knn.evaluate(1)
+            acc = knn.evaluate(knn.x, knn.y, knn.x_test, knn.y_test)
             acc_list.append(acc)
 
         print(np.mean(np.array(acc_list)))
 
+def encoding_experiment(train_percentage, test_percentage, trial):
+    pass
+
+def main():
+    mnist_experiment(0.1, 0.1, 5)
+    
 if __name__ == '__main__':
     main()
 

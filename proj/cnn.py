@@ -1,6 +1,9 @@
 
 __author__ = 'Jinyi Zhang'
 
+import os
+import pickle
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,10 +16,11 @@ class CNN(object):
     
     def __init__(self):
         self.batch_size = 128
-        self.epochs = 1
+        self.epochs = 50
 
         self.log_dir_path = './logs/cnn/'
         self.best_model_path = './models/cnn/weights.best.hdf5'
+        self.tmp_image_output_path = './tmp/cnn.png'
 
         self.img_rows = 28
         self.img_cols = 28
@@ -56,17 +60,20 @@ class CNN(object):
         self.x_train = np.reshape(x_train, (len(x_train), self.img_rows, self.img_cols, 1))  # adapt this if using `channels_first` image data format
         self.x_test = np.reshape(x_test, (len(x_test), self.img_rows, self.img_cols, 1))
 
-        # tensorboard = TensorBoard(log_dir=self.log_dir_path)
+        if os.path.isfile(self.best_model_path):
+            self.load_weights()
+            return
 
-        # mc = ModelCheckpoint(self.best_model_path,
-        #                     save_best_only=True)
+        tensorboard = TensorBoard(log_dir=self.log_dir_path)
+        mc = ModelCheckpoint(self.best_model_path,
+                            save_best_only=True)
 
-        # self.autoencoder.fit(self.x_train, self.x_train,
-        #             epochs=self.epochs,
-        #             batch_size=self.batch_size,
-        #             shuffle=True,
-        #             validation_data=(self.x_test, self.x_test),
-        #             callbacks=[tensorboard, mc])
+        self.autoencoder.fit(self.x_train, self.x_train,
+                    epochs=self.epochs,
+                    batch_size=self.batch_size,
+                    shuffle=True,
+                    validation_data=(self.x_test, self.x_test),
+                    callbacks=[tensorboard, mc])
 
     def load_weights(self):
         self.autoencoder.load_weights(self.best_model_path)
@@ -82,6 +89,14 @@ class CNN(object):
         return encoded_imgs
 
     def evaluate(self):
+        # Load the best model
+        self.load_weights()
+
+        # Show the loss and validation acc
+        loss, val_acc = self.autoencoder.evaluate(self.x_test, self.x_test, verbose=0)
+        print("Loss: {}, Val_acc: {}".format(loss, val_acc))
+
+        # Show some reconstruction results
         reconstructed_test = self.predict(self.x_test)
         self.show_samples(self.x_test, reconstructed_test)
 
@@ -109,19 +124,28 @@ class CNN(object):
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
 
-        plt.savefig('tmp.png')
+        plt.savefig(self.tmp_image_output_path)
 
 
 def main():
     cnn = CNN()
 
     cnn.train()
-
     cnn.evaluate()
 
-    import gc
+    encoding_train = cnn.encode(cnn.x_train)
+    encoding_test = cnn.encode(cnn.x_test)
 
+    # Save the encoded images
+    encoding_train_imgs_path = './data/MNIST/train.encoding'
+    encoding_test_imgs_path = './data/MNIST/test.encoding'
+
+    pickle.dump(encoding_train, open(encoding_train_imgs_path, 'wb'))
+    pickle.dump(encoding_test, open(encoding_test_imgs_path, 'wb'))
+
+    import gc
     gc.collect()
+
 
 if __name__ == '__main__':
     main()
