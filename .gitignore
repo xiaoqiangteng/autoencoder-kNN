@@ -102,4 +102,5 @@ events.*
 *.hdf5
 *.h5
 
-
+# Encoded data
+*.encoding

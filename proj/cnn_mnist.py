@@ -18,9 +18,9 @@ class CNN(object):
         self.batch_size = 128
         self.epochs = 5
 
-        self.log_dir_path = './logs/cnn/'
-        self.best_model_path = './models/cnn/weights.best.hdf5'
-        self.tmp_image_output_path = './tmp/cnn.png'
+        self.log_dir_path = './logs/cnn_mnist/'
+        self.best_model_path = './models/cnn_mnist/weights.best.hdf5'
+        self.tmp_image_output_path = './tmp/cnn_mnist.png'
 
         self.img_rows = 28
         self.img_cols = 28
@@ -140,8 +140,8 @@ def main():
     encoding_test = cnn.encode(cnn.x_test)
 
     # Save the encoded tensors
-    encoding_train_imgs_path = './data/MNIST/train.encoding'
-    encoding_test_imgs_path = './data/MNIST/test.encoding'
+    encoding_train_imgs_path = './data/MNIST_encoding/train.encoding'
+    encoding_test_imgs_path = './data/MNIST_encoding/test.encoding'
 
     pickle.dump(encoding_train, open(encoding_train_imgs_path, 'wb'))
     pickle.dump(encoding_test, open(encoding_test_imgs_path, 'wb'))

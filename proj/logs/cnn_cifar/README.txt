@@ -1,0 +1,1 @@
+CNN autoencoder for CIFAR-10 data logs.
