@@ -16,7 +16,7 @@ class CNN(object):
     
     def __init__(self):
         self.batch_size = 128
-        self.epochs = 10
+        self.epochs = 5
 
         self.log_dir_path = './logs/cnn/'
         self.best_model_path = './models/cnn/weights.best.hdf5'
@@ -29,16 +29,16 @@ class CNN(object):
         kernel_size = (3, 3)
         pooling_size = (2, 2)
 
-        x = Conv2D(500, kernel_size, activation='relu', padding='same')(input_img)
+        x = Conv2D(32, kernel_size, activation='relu', padding='same')(input_img)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(200, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(32, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(128, kernel_size, activation='relu', padding='same')(x)
         encoded = MaxPooling2D(pooling_size, padding='same')(x)
 
-        x = Conv2D(500, kernel_size, activation='relu', padding='same')(encoded)
+        x = Conv2D(128, kernel_size, activation='relu', padding='same')(encoded)
         x = UpSampling2D(pooling_size)(x)
-        x = Conv2D(2000, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
         x = UpSampling2D(pooling_size)(x)
         x = Conv2D(32, kernel_size, activation='relu')(x)
         x = UpSampling2D(pooling_size)(x)
