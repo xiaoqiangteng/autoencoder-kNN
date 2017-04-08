@@ -52,6 +52,8 @@ class CNN(object):
         self.encoder = Model(input_img, encoded)
         self.autoencoder = autoencoder
 
+        print(self.autoencoder.summary())
+
     def load_mnist_data(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
         

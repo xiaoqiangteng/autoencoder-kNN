@@ -7,12 +7,13 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from keras.datasets import mnist
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.models import Model
 from keras.callbacks import TensorBoard, ModelCheckpoint
 
-class CNN(object):
+from cifar import CifarPreprocess
+
+class CNN_CIFAR(object):
     
     def __init__(self):
         self.batch_size = 128
@@ -30,20 +31,20 @@ class CNN(object):
         kernel_size = (3, 3)
         pooling_size = (2, 2)
 
-        x = Conv2D(32, kernel_size, activation='relu', padding='same')(input_img)
+        x = Conv2D(96, kernel_size, activation='relu', padding='same')(input_img)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(288, kernel_size, activation='relu', padding='same')(x)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(128, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(864, kernel_size, activation='relu', padding='same')(x)
         encoded = MaxPooling2D(pooling_size, padding='same')(x)
 
-        x = Conv2D(128, kernel_size, activation='relu', padding='same')(encoded)
+        x = Conv2D(864, kernel_size, activation='relu', padding='same')(encoded)
         x = UpSampling2D(pooling_size)(x)
-        x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(288, kernel_size, activation='relu', padding='same')(x)
         x = UpSampling2D(pooling_size)(x)
-        x = Conv2D(32, kernel_size, activation='relu')(x)
+        x = Conv2D(96, kernel_size, activation='relu', padding='same')(x)
         x = UpSampling2D(pooling_size)(x)
-        decoded = Conv2D(1, kernel_size, activation='sigmoid', padding='same')(x)
+        decoded = Conv2D(self.channels, kernel_size, activation='sigmoid', padding='same')(x)
 
         autoencoder = Model(input_img, decoded)
         autoencoder.compile(optimizer='adam', 
@@ -53,13 +54,18 @@ class CNN(object):
         self.encoder = Model(input_img, encoded)
         self.autoencoder = autoencoder
 
-    def load_mnist_data(self):
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        
-        x_train = x_train.astype(np.float) / 255.
-        x_test = x_test.astype(np.float) / 255.
-        self.x_train = np.reshape(x_train, (len(x_train), self.img_rows, self.img_cols, 1))  # adapt this if using `channels_first` image data format
-        self.x_test = np.reshape(x_test, (len(x_test), self.img_rows, self.img_cols, 1))
+        print(self.autoencoder.summary())
+
+    def load_cifar_data(self):
+        cp = CifarPreprocess()
+
+        batchs = [1, 2, 3, 4, 5]
+        cp.load_cifar_data(batchs)
+
+        x_train = cp.X_train.astype(np.float) / 255.
+        x_test = cp.X_test.astype(np.float) / 255.
+        self.x_train = np.reshape(x_train, (len(x_train), self.img_rows, self.img_cols, self.channels))  # adapt this if using `channels_first` image data format
+        self.x_test = np.reshape(x_test, (len(x_test), self.img_rows, self.img_cols, self.channels))
 
     def train(self):
         
@@ -131,9 +137,9 @@ class CNN(object):
 
 
 def main():
-    cnn = CNN()
+    cnn = CNN_CIFAR()
 
-    cnn.load_mnist_data()
+    cnn.load_cifar_data()
     cnn.train()
     cnn.evaluate()
 
@@ -141,8 +147,8 @@ def main():
     encoding_test = cnn.encode(cnn.x_test)
 
     # Save the encoded tensors
-    encoding_train_imgs_path = './data/MNIST/train.encoding'
-    encoding_test_imgs_path = './data/MNIST/test.encoding'
+    encoding_train_imgs_path = './data/CIFAR_encoding/train.encoding'
+    encoding_test_imgs_path = './data/CIFAR_encoding/test.encoding'
 
     pickle.dump(encoding_train, open(encoding_train_imgs_path, 'wb'))
     pickle.dump(encoding_test, open(encoding_test_imgs_path, 'wb'))
