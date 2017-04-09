@@ -18,7 +18,7 @@ class CNN_CIFAR(object):
     
     def __init__(self):
         self.batch_size = 128
-        self.epochs = 2
+        self.epochs = 5
 
         self.img_rows = 32
         self.img_cols = 32
@@ -141,16 +141,17 @@ class CNN_CIFAR(object):
         return encoded_imgs
 
     def evaluate(self):
-        # Load the best model
-        self.load_weights()
-
         # Show the loss and validation acc
         for label in range(self.num_classes):
+            best_model_path = './models/cnn_cifar/weights.best.{}.hdf5'.format(label)
+            # Load the best model
+            self.load_weights(label, best_model_path)
+
             loss, val_acc = self.autoencoders[label].evaluate(self.x_test[label], self.x_test[label], verbose=0)
             print("Label: {}, Loss: {}, Val_acc: {}\n".format(label, loss, val_acc))
 
             # Show some reconstruction results
-            reconstructed_test = self.predict(self.x_test[label])
+            reconstructed_test = self.predict(label, self.x_test[label])
             self.show_samples(self.x_test[label], reconstructed_test, label)
 
     def predict(self, label, X):
@@ -189,8 +190,8 @@ def main():
     cnn.evaluate()
 
     for label in range(cnn.num_classes):
-        encoding_train = cnn.encode(cnn.x_train[label])
-        encoding_test = cnn.encode(cnn.x_test[label])
+        encoding_train = cnn.encode(label, cnn.x_train[label])
+        encoding_test = cnn.encode(label, cnn.x_test[label])
 
         # Save the encoded tensors
         encoding_train_imgs_path = './data/CIFAR_encoding/train.{}.encoding'.format(label)
