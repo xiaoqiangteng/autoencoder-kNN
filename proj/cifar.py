@@ -7,8 +7,6 @@ from functools import reduce
 import numpy as np
 import matplotlib.pyplot as plt
 
-from knn import kNN
-
 class CifarPreprocess(object):
 
     def __init__(self):
@@ -43,7 +41,9 @@ class CifarPreprocess(object):
         self.y_test = np.array(test_dict[b'labels'])
 
     def cluster_data_by_classes(self):
-        pass
+        print(self.y_test)
+        print(max(self.y_test))
+        print(min(self.y_test))
 
 
 def cifar_experiment(trial, train_percentage=0.1, test_percentage=0.1):
@@ -67,6 +67,9 @@ def cifar_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     X_test = cp.X_test.astype(np.float)[sel]
     y_test = cp.y_test[sel]
 
+    # Lazy import knn
+    from knn import kNN
+
     # Init knn model
     knn = kNN()
 
@@ -82,8 +85,23 @@ def cifar_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
         print(np.mean(np.array(acc_list)))
 
-def show_samples():
-    pass
+def show_samples(cp):
+    tmp_image_output_path = './tmp/cifar.png'
+    n = 10  # how many digits we will display
+
+    plt.figure(figsize=(20, 4))
+    for i in range(n):
+        # display original
+        ax = plt.subplot(2, n, i + 1)
+
+        x = reshape_cifar(cp.X_train[i])
+
+        plt.imshow(x)
+
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    plt.savefig(tmp_image_output_path)
 
 def reshape_cifar(x):
     img_rows = 32
@@ -103,28 +121,9 @@ def main():
     batchs = [1]
     cp.load_cifar_data(batchs)
 
-    print(cp.X_train.shape)
+    cp.cluster_data_by_classes()
 
-    tmp_image_output_path = './tmp/cifar.png'
-    n = 1  # how many digits we will display
-
-    plt.figure(figsize=(20, 4))
-    for i in range(n):
-        # display original
-        ax = plt.subplot(2, n, i + 1)
-
-        x = reshape_cifar(cp.X_train[i])
-
-        for r in x[:, :, 0]:
-            for c in r:
-                print(c)
-
-        plt.imshow(x)
-
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    plt.savefig(tmp_image_output_path)
+    # show_samples(cp)
 
     # trial = 1
     # train_percentage = 1

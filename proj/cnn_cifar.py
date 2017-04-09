@@ -20,17 +20,15 @@ class CNN_CIFAR(object):
         self.batch_size = 128
         self.epochs = 2
 
-        self.log_dir_path = './logs/cnn_cifar/'
-        self.best_model_path = './models/cnn_cifar/weights.best.hdf5'
-        self.tmp_image_output_path = './tmp/cnn_cifar.png'
-
         self.img_rows = 32
         self.img_cols = 32
         self.channels = 3
-        input_img = Input(shape=(self.img_rows, self.img_cols, self.channels))
+        self.num_classes = 10
 
         kernel_size = (5, 5)
         pooling_size = (2, 2)
+
+        input_img = Input(shape=(self.img_rows, self.img_cols, self.channels))
 
         x = Conv2D(36, kernel_size, activation='relu', padding='same')(input_img)
         x = MaxPooling2D(pooling_size, padding='same')(x)
@@ -47,15 +45,19 @@ class CNN_CIFAR(object):
         x = UpSampling2D(pooling_size)(x)
         decoded = Conv2D(self.channels, kernel_size, activation='sigmoid', padding='same')(x)
 
-        autoencoder = Model(input_img, decoded)
-        autoencoder.compile(optimizer='adam', 
-                loss='binary_crossentropy', 
-                metrics=['accuracy'])
+        self.autoencoders = []
+        self.encoders = []
+        # Create 10 autoencoders. 1 for a class
+        for i in range(self.num_classes):
+            autoencoder = Model(input_img, decoded)
+            autoencoder.compile(optimizer='adam', 
+                    loss='binary_crossentropy', 
+                    metrics=['accuracy'])
 
-        self.encoder = Model(input_img, encoded)
-        self.autoencoder = autoencoder
-
-        print(self.autoencoder.summary())
+            encoder = Model(input_img, encoded)
+            
+            self.autoencoders.append(autoencoder)
+            self.encoders.append(encoder)
 
     def load_cifar_data(self):
         cp = CifarPreprocess()
@@ -63,52 +65,78 @@ class CNN_CIFAR(object):
         batchs = [1, 2, 3, 4, 5]
         cp.load_cifar_data(batchs)
 
-        x_train = cp.X_train.astype(np.float) / 255.
-        x_test = cp.X_test.astype(np.float) / 255.
+        x_train_float = cp.X_train.astype(np.float) / 255.
+        x_test_float = cp.X_test.astype(np.float) / 255.
 
-        x_train_list = []
-        for x in x_train:
-            xrgb = reshape_cifar(x)
-            x_train_list.append(xrgb)
+        x_train_list = [reshape_cifar(x) for x in x_train_float]
+        x_test_list = [reshape_cifar(x) for x in x_test_float]
+        
+        x_train = np.array(x_train_list)
+        x_test = np.array(x_test_list)
 
-        x_test_list = []
-        for x in x_test:
-            xrgb = reshape_cifar(x)
-            x_test_list.append(xrgb)
+        print(x_train.shape)
+        print(x_test.shape)
 
-        self.x_train = np.array(x_train_list)
-        self.x_test = np.array(x_test_list)
+        # Load the labels for clustering
+        y_train = cp.y_train
+        y_test = cp.y_test
+        
+        # Need to cluster the data by classes
+        self.x_train = {}
+        self.x_test = {}
 
-        print(self.x_train.shape)
-        print(self.x_test.shape)
+        for i, x in enumerate(x_train):
+            label = y_train[i]
+
+            if label not in self.x_train:
+                self.x_train[label] = [x]
+            else:
+                self.x_train[label].append(x)
+
+        for label in range(self.num_classes):
+            self.x_train[label] = np.array(self.x_train[label])
+
+        for i, x in enumerate(x_test):
+            label = y_test[i]
+
+            if label not in self.x_test:
+                self.x_test[label] = [x]
+            else:
+                self.x_test[label].append(x)
+
+        for label in range(self.num_classes):
+            self.x_test[label] = np.array(self.x_test[label])
 
     def train(self):
+        for i in range(self.num_classes):
+            log_dir_path = './logs/cnn_cifar/{}/'.format(i)
+            best_model_path = './models/cnn_cifar/{}/weights.best.hdf5'.format(i)
         
-        if os.path.isfile(self.best_model_path):
-            self.load_weights()
-            return
+            if os.path.isfile(best_model_path):
+                self.load_weights(i, best_model_path)
+                return
 
-        tensorboard = TensorBoard(log_dir=self.log_dir_path)
-        mc = ModelCheckpoint(self.best_model_path,
-                            save_best_only=True)
+            tensorboard = TensorBoard(log_dir=log_dir_path)
+            mc = ModelCheckpoint(best_model_path,
+                                save_best_only=True)
 
-        self.autoencoder.fit(self.x_train, self.x_train,
-                    epochs=self.epochs,
-                    batch_size=self.batch_size,
-                    shuffle=True,
-                    validation_data=(self.x_test, self.x_test),
-                    callbacks=[tensorboard, mc])
+            self.autoencoders[i].fit(self.x_train[i], self.x_train[i],
+                        epochs=self.epochs,
+                        batch_size=self.batch_size,
+                        shuffle=True,
+                        validation_data=(self.x_test[i], self.x_test[i]),
+                        callbacks=[tensorboard, mc])
 
-    def load_weights(self):
-        self.autoencoder.load_weights(self.best_model_path)
+    def load_weights(self, i, best_model_path):
+        self.autoencoders[i].load_weights(best_model_path)
 
         # Re-compile
-        self.autoencoder.compile(optimizer='adam', 
+        self.autoencoders[i].compile(optimizer='adam', 
                 loss='binary_crossentropy', 
                 metrics=['accuracy'])
 
-    def encode(self, X):
-        encoded_imgs = self.encoder.predict(X)
+    def encode(self, label, X):
+        encoded_imgs = self.encoders[label].predict(X)
         
         return encoded_imgs
 
@@ -117,19 +145,22 @@ class CNN_CIFAR(object):
         self.load_weights()
 
         # Show the loss and validation acc
-        loss, val_acc = self.autoencoder.evaluate(self.x_test, self.x_test, verbose=0)
-        print("Loss: {}, Val_acc: {}".format(loss, val_acc))
+        for label in range(self.num_classes):
+            loss, val_acc = self.autoencoders[label].evaluate(self.x_test[label], self.x_test[label], verbose=0)
+            print("Label: {}, Loss: {}, Val_acc: {}\n".format(label, loss, val_acc))
 
-        # Show some reconstruction results
-        reconstructed_test = self.predict(self.x_test)
-        self.show_samples(self.x_test, reconstructed_test)
+            # Show some reconstruction results
+            reconstructed_test = self.predict(self.x_test[label])
+            self.show_samples(self.x_test[label], reconstructed_test, label)
 
-    def predict(self, X):
-        reconstructed_imgs = self.autoencoder.predict(X)
+    def predict(self, label, X):
+        reconstructed_imgs = self.autoencoders[label].predict(X)
 
         return reconstructed_imgs
 
-    def show_samples(self, x_test, reconstructed_imgs):
+    def show_samples(self, x_test, reconstructed_imgs, label):
+        tmp_image_output_path = './tmp/cnn_cifar.{}.png'.format(label)
+
         n = 10  # how many digits we will display
 
         plt.figure(figsize=(20, 4))
@@ -146,13 +177,14 @@ class CNN_CIFAR(object):
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
 
-        plt.savefig(self.tmp_image_output_path)
+        plt.savefig(tmp_image_output_path)
 
 
 def main():
     cnn = CNN_CIFAR()
 
     cnn.load_cifar_data()
+
     cnn.train()
     cnn.evaluate()
 
