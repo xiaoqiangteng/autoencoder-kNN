@@ -12,12 +12,13 @@ from keras.models import Model
 from keras.callbacks import TensorBoard, ModelCheckpoint
 
 from cifar import CifarPreprocess
+from cifar import reshape_cifar
 
 class CNN_CIFAR(object):
     
     def __init__(self):
         self.batch_size = 128
-        self.epochs = 5
+        self.epochs = 2
 
         self.log_dir_path = './logs/cnn_cifar/'
         self.best_model_path = './models/cnn_cifar/weights.best.hdf5'
@@ -28,21 +29,21 @@ class CNN_CIFAR(object):
         self.channels = 3
         input_img = Input(shape=(self.img_rows, self.img_cols, self.channels))
 
-        kernel_size = (3, 3)
+        kernel_size = (5, 5)
         pooling_size = (2, 2)
 
-        x = Conv2D(96, kernel_size, activation='relu', padding='same')(input_img)
+        x = Conv2D(36, kernel_size, activation='relu', padding='same')(input_img)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(288, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
         x = MaxPooling2D(pooling_size, padding='same')(x)
-        x = Conv2D(864, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(128, kernel_size, activation='relu', padding='same')(x)
         encoded = MaxPooling2D(pooling_size, padding='same')(x)
 
-        x = Conv2D(864, kernel_size, activation='relu', padding='same')(encoded)
+        x = Conv2D(128, kernel_size, activation='relu', padding='same')(encoded)
         x = UpSampling2D(pooling_size)(x)
-        x = Conv2D(288, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
         x = UpSampling2D(pooling_size)(x)
-        x = Conv2D(96, kernel_size, activation='relu', padding='same')(x)
+        x = Conv2D(32, kernel_size, activation='relu', padding='same')(x)
         x = UpSampling2D(pooling_size)(x)
         decoded = Conv2D(self.channels, kernel_size, activation='sigmoid', padding='same')(x)
 
@@ -64,8 +65,22 @@ class CNN_CIFAR(object):
 
         x_train = cp.X_train.astype(np.float) / 255.
         x_test = cp.X_test.astype(np.float) / 255.
-        self.x_train = np.reshape(x_train, (len(x_train), self.img_rows, self.img_cols, self.channels))  # adapt this if using `channels_first` image data format
-        self.x_test = np.reshape(x_test, (len(x_test), self.img_rows, self.img_cols, self.channels))
+
+        x_train_list = []
+        for x in x_train:
+            xrgb = reshape_cifar(x)
+            x_train_list.append(xrgb)
+
+        x_test_list = []
+        for x in x_test:
+            xrgb = reshape_cifar(x)
+            x_test_list.append(xrgb)
+
+        self.x_train = np.array(x_train_list)
+        self.x_test = np.array(x_test_list)
+
+        print(self.x_train.shape)
+        print(self.x_test.shape)
 
     def train(self):
         
@@ -121,15 +136,13 @@ class CNN_CIFAR(object):
         for i in range(n):
             # display original
             ax = plt.subplot(2, n, i + 1)
-            plt.imshow(x_test[i].reshape(28, 28))
-            plt.gray()
+            plt.imshow(x_test[i].reshape(self.img_rows, self.img_cols, self.channels))
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
 
             # display reconstruction
             ax = plt.subplot(2, n, i + 1 + n)
-            plt.imshow(reconstructed_imgs[i].reshape(28, 28))
-            plt.gray()
+            plt.imshow(reconstructed_imgs[i].reshape(self.img_rows, self.img_cols, self.channels))
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
 

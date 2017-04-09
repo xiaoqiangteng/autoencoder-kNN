@@ -5,6 +5,7 @@ import random
 from functools import reduce
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from knn import kNN
 
@@ -40,6 +41,9 @@ class CifarPreprocess(object):
         test_dict = pickle.load(open(self.test_batch, 'rb'), encoding='bytes')
         self.X_test = test_dict[b'data']
         self.y_test = np.array(test_dict[b'labels'])
+
+    def cluster_data_by_classes(self):
+        pass
 
 
 def cifar_experiment(trial, train_percentage=0.1, test_percentage=0.1):
@@ -78,20 +82,55 @@ def cifar_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
         print(np.mean(np.array(acc_list)))
 
+def show_samples():
+    pass
+
+def reshape_cifar(x):
+    img_rows = 32
+    img_cols = 32
+
+    r = x[: 1024].reshape(img_rows, img_cols)
+    g = x[1024: 2048].reshape(img_rows, img_cols)
+    b = x[2048:].reshape(img_rows, img_cols)
+
+    x_rgb = np.array([r, g, b]).transpose((1, 2, 0))
+
+    return x_rgb
 
 def main():
-    # cp = CifarPreprocess()
+    cp = CifarPreprocess()
 
-    # batchs = [1]
-    # cp.load_cifar_data(batchs)
+    batchs = [1]
+    cp.load_cifar_data(batchs)
 
-    # print(cp.X_train.dtype)
+    print(cp.X_train.shape)
 
-    trial = 1
-    train_percentage = 1
-    test_percentage = 1
+    tmp_image_output_path = './tmp/cifar.png'
+    n = 1  # how many digits we will display
 
-    cifar_experiment(trial, train_percentage, test_percentage)
+    plt.figure(figsize=(20, 4))
+    for i in range(n):
+        # display original
+        ax = plt.subplot(2, n, i + 1)
+
+        x = reshape_cifar(cp.X_train[i])
+
+        for r in x[:, :, 0]:
+            for c in r:
+                print(c)
+
+        plt.imshow(x)
+
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    plt.savefig(tmp_image_output_path)
+
+    # trial = 1
+    # train_percentage = 1
+    # test_percentage = 1
+
+    # cifar_experiment(trial, train_percentage, test_percentage)
 
 if __name__ == '__main__':
     main()
