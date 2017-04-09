@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.models import Model
 from keras.callbacks import TensorBoard, ModelCheckpoint
+from keras.optimizers import *
 
 from cifar import CifarPreprocess
 from cifar import reshape_cifar
@@ -17,41 +18,47 @@ from cifar import reshape_cifar
 class CNN_CIFAR(object):
     
     def __init__(self):
-        self.batch_size = 128
-        self.epochs = 5
+        self.batch_size = 32
+        self.epochs = 20
 
         self.img_rows = 32
         self.img_cols = 32
         self.channels = 3
-        self.num_classes = 10
+        self.num_classes = 2
 
         kernel_size = (5, 5)
         pooling_size = (2, 2)
 
         input_img = Input(shape=(self.img_rows, self.img_cols, self.channels))
 
-        x = Conv2D(36, kernel_size, activation='relu', padding='same')(input_img)
-        x = MaxPooling2D(pooling_size, padding='same')(x)
+        x = Conv2D(32, kernel_size, activation='relu', padding='same')(input_img)
+        # x = MaxPooling2D(pooling_size, padding='same')(x)
         x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
-        x = MaxPooling2D(pooling_size, padding='same')(x)
+        # x = MaxPooling2D(pooling_size, padding='same')(x)
         x = Conv2D(128, kernel_size, activation='relu', padding='same')(x)
         encoded = MaxPooling2D(pooling_size, padding='same')(x)
 
         x = Conv2D(128, kernel_size, activation='relu', padding='same')(encoded)
-        x = UpSampling2D(pooling_size)(x)
+        # x = UpSampling2D(pooling_size)(x)
         x = Conv2D(64, kernel_size, activation='relu', padding='same')(x)
-        x = UpSampling2D(pooling_size)(x)
+        # x = Conv2D(64, kernel_size, activation='relu', padding='same')(encoded)
+        # x = UpSampling2D(pooling_size)(x)
         x = Conv2D(32, kernel_size, activation='relu', padding='same')(x)
         x = UpSampling2D(pooling_size)(x)
         decoded = Conv2D(self.channels, kernel_size, activation='sigmoid', padding='same')(x)
+
+        # Define the optimizer
+        self.optimizer = Adam(lr=1e-4)
+        # self.optimizer = SGD(momentum=0.9)
+
 
         self.autoencoders = []
         self.encoders = []
         # Create 10 autoencoders. 1 for a class
         for _ in range(self.num_classes):
             autoencoder = Model(input_img, decoded)
-            autoencoder.compile(optimizer='adam', 
-                    loss='binary_crossentropy', 
+            autoencoder.compile(optimizer=self.optimizer, 
+                    loss='mse', 
                     metrics=['accuracy'])
 
             encoder = Model(input_img, encoded)
@@ -131,8 +138,8 @@ class CNN_CIFAR(object):
         self.autoencoders[label].load_weights(best_model_path)
 
         # Re-compile
-        self.autoencoders[label].compile(optimizer='adam', 
-                loss='binary_crossentropy', 
+        self.autoencoders[label].compile(optimizer=self.optimizer, 
+                loss='mse', 
                 metrics=['accuracy'])
 
     def encode(self, label, X):
