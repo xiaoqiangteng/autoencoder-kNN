@@ -1,1 +1,0 @@
-Clustered CIFAR samples
