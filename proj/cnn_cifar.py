@@ -48,7 +48,7 @@ class CNN_CIFAR(object):
         self.autoencoders = []
         self.encoders = []
         # Create 10 autoencoders. 1 for a class
-        for i in range(self.num_classes):
+        for _ in range(self.num_classes):
             autoencoder = Model(input_img, decoded)
             autoencoder.compile(optimizer='adam', 
                     loss='binary_crossentropy', 
@@ -108,30 +108,30 @@ class CNN_CIFAR(object):
             self.x_test[label] = np.array(self.x_test[label])
 
     def train(self):
-        for i in range(self.num_classes):
-            log_dir_path = './logs/cnn_cifar/{}/'.format(i)
-            best_model_path = './models/cnn_cifar/{}/weights.best.hdf5'.format(i)
+        for label in range(self.num_classes):
+            log_dir_path = './logs/cnn_cifar/{}/'.format(label)
+            best_model_path = './models/cnn_cifar/weights.best.{}.hdf5'.format(label)
         
             if os.path.isfile(best_model_path):
-                self.load_weights(i, best_model_path)
+                self.load_weights(label, best_model_path)
                 return
 
             tensorboard = TensorBoard(log_dir=log_dir_path)
             mc = ModelCheckpoint(best_model_path,
                                 save_best_only=True)
 
-            self.autoencoders[i].fit(self.x_train[i], self.x_train[i],
+            self.autoencoders[label].fit(self.x_train[label], self.x_train[label],
                         epochs=self.epochs,
                         batch_size=self.batch_size,
                         shuffle=True,
-                        validation_data=(self.x_test[i], self.x_test[i]),
+                        validation_data=(self.x_test[label], self.x_test[label]),
                         callbacks=[tensorboard, mc])
 
-    def load_weights(self, i, best_model_path):
-        self.autoencoders[i].load_weights(best_model_path)
+    def load_weights(self, label, best_model_path):
+        self.autoencoders[label].load_weights(best_model_path)
 
         # Re-compile
-        self.autoencoders[i].compile(optimizer='adam', 
+        self.autoencoders[label].compile(optimizer='adam', 
                 loss='binary_crossentropy', 
                 metrics=['accuracy'])
 
@@ -188,15 +188,16 @@ def main():
     cnn.train()
     cnn.evaluate()
 
-    encoding_train = cnn.encode(cnn.x_train)
-    encoding_test = cnn.encode(cnn.x_test)
+    for label in range(cnn.num_classes):
+        encoding_train = cnn.encode(cnn.x_train[label])
+        encoding_test = cnn.encode(cnn.x_test[label])
 
-    # Save the encoded tensors
-    encoding_train_imgs_path = './data/CIFAR_encoding/train.encoding'
-    encoding_test_imgs_path = './data/CIFAR_encoding/test.encoding'
+        # Save the encoded tensors
+        encoding_train_imgs_path = './data/CIFAR_encoding/train.{}.encoding'.format(label)
+        encoding_test_imgs_path = './data/CIFAR_encoding/test.{}.encoding'.format(label)
 
-    pickle.dump(encoding_train, open(encoding_train_imgs_path, 'wb'))
-    pickle.dump(encoding_test, open(encoding_test_imgs_path, 'wb'))
+        pickle.dump(encoding_train, open(encoding_train_imgs_path, 'wb'))
+        pickle.dump(encoding_test, open(encoding_test_imgs_path, 'wb'))
 
     import gc
     gc.collect()
