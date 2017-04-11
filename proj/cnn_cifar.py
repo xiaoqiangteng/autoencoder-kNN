@@ -19,12 +19,12 @@ class CNN_CIFAR(object):
     
     def __init__(self):
         self.batch_size = 32
-        self.epochs = 20
+        self.epochs = 15
 
         self.img_rows = 32
         self.img_cols = 32
         self.channels = 3
-        self.num_classes = 2
+        self.num_classes = 10
 
         kernel_size = (5, 5)
         pooling_size = (2, 2)
@@ -121,7 +121,7 @@ class CNN_CIFAR(object):
         
             if os.path.isfile(best_model_path):
                 self.load_weights(label, best_model_path)
-                return
+                continue
 
             tensorboard = TensorBoard(log_dir=log_dir_path)
             mc = ModelCheckpoint(best_model_path,
