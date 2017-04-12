@@ -1,6 +1,7 @@
 __author__ = 'Jinyi Zhang'
 
 import numpy as np
+from scipy.sparse import csr_matrix
 from metric_learn import NCA, LMNN
 
 from knn import kNN
@@ -11,23 +12,29 @@ def nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
     print(knn.x.shape)
 
-    # nca = NCA(max_iter=100, learning_rate=0.01)
-    # nca.fit(knn.x[:, :30], knn.y)
+    nca = NCA(max_iter=100, learning_rate=0.01)
 
-    # x_train = nca.transform()
-    # x_test = nca.transform(knn.x_test[:, :30])
+    sx = csr_matrix(knn.x[:, :30])
 
-    # print(x_train.shape)
-    # print(x_test.shape)
+    nca.fit(sx, knn.y)
 
-    lmnn = LMNN(k=5, learn_rate=1e-6)
-    lmnn.fit(knn.x[:, :30], knn.y)
+    x_train = nca.transform()
 
-    x_train = lmnn.transform()
-    x_test = lmnn.transform(knn.x_test[:, :30])
+    sx = csr_matrix(knn.x_test[:, :30])
+
+    x_test = nca.transform(sx)
 
     print(x_train.shape)
     print(x_test.shape)
+
+    # lmnn = LMNN(k=5, learn_rate=1e-6)
+    # lmnn.fit(knn.x[:, :30], knn.y)
+
+    # x_train = lmnn.transform()
+    # x_test = lmnn.transform(knn.x_test[:, :30])
+
+    # print(x_train.shape)
+    # print(x_test.shape)
 
 
     # k_valus = [1, 3, 5, 7]
@@ -44,8 +51,8 @@ def nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 0.01
-    test_percentage = 0.01
+    train_percentage = 0.1
+    test_percentage = 0.1
     trial = 1
 
     nca_mnist_experiment(trial, train_percentage, test_percentage)
