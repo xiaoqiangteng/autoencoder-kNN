@@ -46,8 +46,6 @@ class Autoencoder(object):
 
         h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 
-        print(h_conv1.get_shape().as_list())
-
         # Conv layer 2, 64 filters
         W_conv2 = weight_variable([self.kernel_size, self.kernel_size, 32, 64])
         b_conv2 = bias_variable([64])
@@ -57,8 +55,6 @@ class Autoencoder(object):
         # Store the encoded tensor
         self.z = h_conv2
 
-        print(h_conv2.get_shape().as_list())
-
         # Build the decoder using the same weights
         W_conv3 = W_conv2
         b_conv3 = bias_variable([32])
@@ -67,8 +63,6 @@ class Autoencoder(object):
             tf.shape(h_conv1)[1], tf.shape(h_conv1)[2], tf.shape(h_conv1)[3]])
 
         h_conv3 = tf.nn.relu(conv2d_transpose(h_conv2, W_conv3, output_shape) + b_conv3)
-
-        print(h_conv3.get_shape().as_list())
 
         # Layer 3
         W_conv4 = W_conv1
@@ -81,15 +75,12 @@ class Autoencoder(object):
 
         self.y = h_conv4
 
-        print(self.y.get_shape().as_list())
-
         # MSE loss function
         self.loss = tf.reduce_sum(tf.square(self.y - x_image))
 
 
 def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
-    mean_img = np.mean(mnist.train.images, axis=0)
 
     auto = Autoencoder()
 
@@ -100,17 +91,39 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess.run(tf.global_variables_initializer())
 
     batch_size = 100
-    epochs = 3
+    epochs = 10
     for epoch_i in range(epochs):
         for batch_i in range(mnist.train.num_examples // batch_size):
             batch_x, _ = mnist.train.next_batch(batch_size)
 
-            # Normalization
-            train = np.array([img - mean_img for img in batch_x])
+            sess.run(optimizer, feed_dict={auto.x: batch_x})
 
-            sess.run(optimizer, feed_dict={auto.x: train})
+        print(epoch_i, sess.run(auto.loss, feed_dict={auto.x: batch_x}))
 
-        print(epoch_i, sess.run(auto.loss, feed_dict={auto.x: train}))
+    n = 10
+    test_x, _ = mnist.test.next_batch(n)
+
+    recon = sess.run(auto.y, feed_dict={auto.x: test_x})
+  
+    plt.figure(figsize=(20, 4))
+    for i in range(n):
+        # display original
+        ax = plt.subplot(2, n, i + 1)
+        plt.imshow(test_x[i].reshape(28, 28))
+        plt.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        # display reconstruction
+        ax = plt.subplot(2, n, i + 1 + n)
+
+        plt.imshow(recon[i].reshape(28, 28))
+
+        plt.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    plt.savefig('./tmp/tf_mnist.png')
 
 
 def main():
@@ -120,5 +133,8 @@ def main():
 
     cnn_nca_mnist_experiment(trial, train_percentage, test_percentage)
     
+    import gc
+    gc.collect()
+
 if __name__ == '__main__':
     main()
