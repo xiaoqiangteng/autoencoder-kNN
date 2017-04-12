@@ -14,13 +14,13 @@ def nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
     nca = NCA(max_iter=100, learning_rate=0.01)
 
-    sx = csr_matrix(knn.x[:, :30])
+    sx = csr_matrix(knn.x[:, :32])
 
     nca.fit(sx, knn.y)
 
     x_train = nca.transform()
 
-    sx = csr_matrix(knn.x_test[:, :30])
+    sx = csr_matrix(knn.x_test[:, :32])
 
     x_test = nca.transform(sx)
 
@@ -51,8 +51,8 @@ def nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 0.1
-    test_percentage = 0.1
+    train_percentage = 0.05
+    test_percentage = 0.05
     trial = 1
 
     nca_mnist_experiment(trial, train_percentage, test_percentage)
