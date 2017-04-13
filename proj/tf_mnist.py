@@ -103,10 +103,10 @@ class Autoencoder(object):
         nca_obj = tf.reduce_sum(neighbor_psum)
 
         # Define the total loss
-        alpha1 = tf.constant(0.9)
-        alpha2 = tf.constant(0.1)
+        alpha1 = tf.constant(0.99)
+        alpha2 = tf.constant(0.01)
 
-        self.loss = alpha2 * reconstruction_error - alpha1 * nca_obj
+        self.loss = - alpha1 * nca_obj + alpha2 * reconstruction_error
         self.nca_obj = -nca_obj
         self.reconstruction_error = reconstruction_error
 
@@ -117,30 +117,109 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
     train_m = int(mnist.train.num_examples * train_percentage)
     test_m = int(mnist.test.num_examples * test_percentage)
+    validation_m = mnist.validation.num_examples
 
     auto = Autoencoder()
 
     learning_rate = 0.001
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
+    # Add ops to save and restore all the variables.
+    saver = tf.train.Saver()
+
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
     batch_size = 100
-    epochs = 20
+    epochs = 5
+    minimum_loss = np.inf
     for epoch_i in range(epochs):
+        val_loss_list = []
+        rec_error_list = []
+        nca_obj_list = []
+
         for batch_i in range(train_m // batch_size):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
 
             sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
-        print(epoch_i, sess.run([auto.loss, auto.reconstruction_error, auto.nca_obj], 
-                                    feed_dict={auto.x: batch_x, auto.y: batch_y}))
+        for batch_i in range(validation_m // batch_size):
+            batch_x, batch_y = mnist.validation.next_batch(batch_size)            
+            val_loss, rec_error, nca_obj = sess.run([auto.loss, auto.reconstruction_error, auto.nca_obj], 
+                                                        feed_dict={auto.x: batch_x, auto.y: batch_y})
+            
+            val_loss_list.append(val_loss)
+            rec_error_list.append(rec_error)
+            nca_obj_list.append(nca_obj)
 
+        validation_loss = np.mean(val_loss_list)
+        reconstruction_error = np.mean(rec_error_list)
+        nca_objective = np.mean(nca_obj_list)
+
+        print(epoch_i, validation_loss, reconstruction_error, nca_obj)
+
+        if validation_loss < minimum_loss:
+            minimum_loss = validation_loss
+            save_path = saver.save(sess, "./models/tf_mnist/model.ckpt")
 
     # Encode training and testing samples
+    # Save the encoded tensors
 
+    saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
+    encoding_train_imgs_path = './data/MNIST_encoding/tf_train.encoding'
+    encoding_test_imgs_path = './data/MNIST_encoding/tf_test.encoding'
+    train_labels_path = './data/MNIST_encoding/tf_train.labels'
+    test_labels_path = './data/MNIST_encoding/tf_test.labels'
+
+    encoded_imgs_list = []
+    labels_list = []
+    for batch_i in range(train_m // batch_size):
+        batch_x, batch_y = mnist.train.next_batch(batch_size)
+        encoded_batches = sess.run(auto.encoded_x, feed_dict={auto.x: batch_x, auto.y: batch_y})
+        
+        encoded_imgs_list.append(encoded_batches)
+        labels_list.append(batch_y)
+
+    for batch_i in range(validation_m // batch_size):
+        batch_x, batch_y = mnist.validation.next_batch(batch_size)            
+        encoded_batches = sess.run(auto.encoded_x, feed_dict={auto.x: batch_x, auto.y: batch_y})
+
+        encoded_imgs_list.append(encoded_batches)
+        labels_list.append(batch_y)
+
+    encoded_train_imgs = np.array(encoded_imgs_list)
+    m, n, d = encoded_train_imgs.shape
+    encoded_train_imgs = encoded_train_imgs.reshape(m * n, d)
+    print(encoded_train_imgs.shape)
+
+    train_labels = np.array(labels_list).flatten()
+    print(train_labels.shape)
+
+    # Save the encoded imgs
+    pickle.dump(encoded_train_imgs, open(encoding_train_imgs_path, 'wb'))
+    pickle.dump(train_labels, open(train_labels_path, 'wb'))
+
+    encoded_imgs_list = []
+    labels_list = []
+    for batch_i in range(test_m // batch_size):
+        batch_x, batch_y = mnist.test.next_batch(batch_size)            
+        encoded_batches = sess.run(auto.encoded_x, feed_dict={auto.x: batch_x, auto.y: batch_y})
+
+        encoded_imgs_list.append(encoded_batches)
+        labels_list.append(batch_y)
+
+    encoded_test_imgs = np.array(encoded_imgs_list)
+    m, n, d = encoded_test_imgs.shape
+    encoded_test_imgs = encoded_test_imgs.reshape(m * n, d)
+    print(encoded_test_imgs.shape)
+
+    test_labels = np.array(labels_list).flatten()
+    print(test_labels.shape)
+
+    # Save the encoded imgs
+    pickle.dump(encoded_test_imgs, open(encoding_test_imgs_path, 'wb'))
+    pickle.dump(test_labels, open(test_labels_path, 'wb'))
 
     # Show 10 reconstructed images
     n = 32
