@@ -165,8 +165,8 @@ def tf_encoding_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 0.1
-    test_percentage = 0.1
+    train_percentage = 1
+    test_percentage = 1
     trial = 1
 
     # mnist_experiment(trial, train_percentage, test_percentage)
