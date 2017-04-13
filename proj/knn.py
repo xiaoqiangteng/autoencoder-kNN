@@ -37,8 +37,6 @@ class kNN(object):
 
         self.x_test = x_test.reshape((m, w * h)).astype(np.float)[sel]
         self.y_test = y_test[sel]
-
-
     
     def evaluate(self, X, y, X_test, y_test):
         x_square = np.diag(np.dot(X, X.T))
@@ -78,8 +76,8 @@ def mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
         print(np.mean(np.array(acc_list)))
 
 def encoding_experiment(trial, train_percentage=0.1, test_percentage=0.1):
-    encoding_train_imgs_path = './data/MNIST/train.encoding'
-    encoding_test_imgs_path = './data/MNIST/test.encoding'
+    encoding_train_imgs_path = './data/MNIST_encoding/train.encoding'
+    encoding_test_imgs_path = './data/MNIST_encoding/test.encoding'
 
     encoding_train = pickle.load(open(encoding_train_imgs_path, 'rb'))
     encoding_test = pickle.load(open(encoding_test_imgs_path, 'rb'))
@@ -117,9 +115,9 @@ def encoding_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 def main():
     train_percentage = 0.1
     test_percentage = 0.1
-    trial = 5
+    trial = 1
 
-    mnist_experiment(trial, train_percentage, test_percentage)
+    # mnist_experiment(trial, train_percentage, test_percentage)
     encoding_experiment(trial, train_percentage, test_percentage)
     
 if __name__ == '__main__':

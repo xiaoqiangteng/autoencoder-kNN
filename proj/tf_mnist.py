@@ -36,11 +36,11 @@ class Autoencoder(object):
         self.kernel_size = 3
 
         # None mans a dimension can be of any length
-        self.x = tf.placeholder(tf.float32, [32, 784])
+        self.x = tf.placeholder(tf.float32, [None, 784])
         x_image = tf.reshape(self.x, [-1, self.img_rows, self.img_cols, 1])
 
         # Define the labels
-        self.y = tf.placeholder(tf.int8, [32])
+        self.y = tf.placeholder(tf.int8, [None])
 
         # Cluster the sample
         m = tf.shape(self.x)[0]
@@ -86,11 +86,8 @@ class Autoencoder(object):
         reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
 
         # NCA objection function
-        dx = self.encoded_x[:, None] - self.encoded_x[None]
-        tmp = tf.einsum('mni,mnj->mnij', dx, dx)
+        dx = tf.subtract(self.encoded_x[:, None], self.encoded_x[None])
         masks = tf.equal(self.y[:, None], self.y[None])
-        print(masks)
-        # masks = tf.cast(masks, tf.int32)
 
         dx_square = tf.square(dx)
         softmax_tensor = tf.exp(-dx_square)
@@ -100,13 +97,16 @@ class Autoencoder(object):
         softmax_zero_diagonal = tf.matrix_set_diag(softmax_matrix, zero_diagonal)
         softmax = softmax_zero_diagonal / tf.reduce_sum(softmax_zero_diagonal, 1)
 
-        zero_matrix = tf.zeros([32, 32])
+        zero_matrix = tf.zeros([m, m])
         neighbor_psum = tf.where(masks, softmax, zero_matrix)
 
         nca_obj = tf.reduce_sum(neighbor_psum)
 
         # Define the total loss
         self.loss = reconstruction_error - nca_obj
+        self.nca_obj = -nca_obj
+        self.reconstruction_error = reconstruction_error
+
 
 
 def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
@@ -118,21 +118,25 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     auto = Autoencoder()
 
     learning_rate = 0.001
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
+    optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
     batch_size = 32
-    epochs = 1
+    epochs = 50
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
-        # for batch_i in range(1):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
 
-            sess.run(optimizer, feed_dict={auto.x: batch_x, auto.y: batch_y})
+            sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
-        print(epoch_i, sess.run(auto.loss, feed_dict={auto.x: batch_x, auto.y: batch_y}))
+        print(epoch_i, sess.run([auto.loss, auto.reconstruction_error, auto.nca_obj], 
+                                    feed_dict={auto.x: batch_x, auto.y: batch_y}))
+
+
+    # Encode training and testing samples
+
 
 
     # Show 10 reconstructed images
@@ -164,8 +168,8 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 0.1
-    test_percentage = 0.1
+    train_percentage = 1
+    test_percentage = 1
     trial = 1
 
     cnn_nca_mnist_experiment(trial, train_percentage, test_percentage)
