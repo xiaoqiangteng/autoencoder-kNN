@@ -58,6 +58,8 @@ class Autoencoder(object):
 
         h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
 
+        # Conv layer 3, 
+
         # Store the encoded tensor
         # self.encoded_x = h_conv2
         self.encoded_x = tf.reshape(h_conv2, [-1, 7 * 7 * 64])
@@ -103,12 +105,12 @@ class Autoencoder(object):
         nca_obj = tf.reduce_sum(neighbor_psum)
 
         # Define the total loss
-        alpha1 = tf.constant(0.99)
-        alpha2 = tf.constant(0.01)
+        alpha1 = tf.constant(0.999)
+        alpha2 = tf.constant(0.001)
 
-        self.loss = - alpha1 * nca_obj + alpha2 * reconstruction_error
-        self.nca_obj = -nca_obj
-        self.reconstruction_error = reconstruction_error
+        self.loss = tf.negative(tf.multiply(alpha1, nca_obj)) + tf.multiply(alpha2, reconstruction_error)
+        self.nca_obj = tf.negative(tf.multiply(alpha1, nca_obj))
+        self.reconstruction_error = tf.multiply(alpha2, reconstruction_error)
 
 
 
