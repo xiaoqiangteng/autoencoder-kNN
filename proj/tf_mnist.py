@@ -36,11 +36,11 @@ class Autoencoder(object):
         self.kernel_size = 3
 
         # None mans a dimension can be of any length
-        self.x = tf.placeholder(tf.float32, [None, 784])
+        self.x = tf.placeholder(tf.float32, [32, 784])
         x_image = tf.reshape(self.x, [-1, self.img_rows, self.img_cols, 1])
 
         # Define the labels
-        self.y = tf.placeholder(tf.int8, [None])
+        self.y = tf.placeholder(tf.int8, [32])
 
         # Cluster the sample
         m = tf.shape(self.x)[0]
@@ -61,7 +61,6 @@ class Autoencoder(object):
         # Store the encoded tensor
         # self.encoded_x = h_conv2
         self.encoded_x = tf.reshape(h_conv2, [-1, 7 * 7 * 64])
-        print(self.encoded_x.get_shape().as_list())
 
         # Build the decoder using the same weights
         W_conv3 = W_conv2
@@ -87,11 +86,27 @@ class Autoencoder(object):
         reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
 
         # NCA objection function
-        # dX = h_conv2[:,None] - h_conv2[None]
-        # tmp = np.einsum('...i,...j->...ij', dX, dX)
+        dx = self.encoded_x[:, None] - self.encoded_x[None]
+        tmp = tf.einsum('mni,mnj->mnij', dx, dx)
+        masks = tf.equal(self.y[:, None], self.y[None])
+        print(masks)
+        # masks = tf.cast(masks, tf.int32)
 
+        dx_square = tf.square(dx)
+        softmax_tensor = tf.exp(-dx_square)
+        softmax_matrix = tf.reduce_sum(softmax_tensor, 2)
 
-        self.loss = reconstruction_error
+        zero_diagonal = tf.zeros([m])
+        softmax_zero_diagonal = tf.matrix_set_diag(softmax_matrix, zero_diagonal)
+        softmax = softmax_zero_diagonal / tf.reduce_sum(softmax_zero_diagonal, 1)
+
+        zero_matrix = tf.zeros([32, 32])
+        neighbor_psum = tf.where(masks, softmax, zero_matrix)
+
+        nca_obj = tf.reduce_sum(neighbor_psum)
+
+        # Define the total loss
+        self.loss = reconstruction_error - nca_obj
 
 
 def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
@@ -109,7 +124,7 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess.run(tf.global_variables_initializer())
 
     batch_size = 32
-    epochs = 5
+    epochs = 1
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
         # for batch_i in range(1):
@@ -119,11 +134,14 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
         print(epoch_i, sess.run(auto.loss, feed_dict={auto.x: batch_x, auto.y: batch_y}))
 
-    n = 10
+
+    # Show 10 reconstructed images
+    n = 32
     x_test, _ = mnist.test.next_batch(n)
 
     reconstructed_imgs = sess.run(auto.reconstructed_x, feed_dict={auto.x: x_test})
-  
+
+    n = 10
     plt.figure(figsize=(20, 4))
     for i in range(n):
         # display original
