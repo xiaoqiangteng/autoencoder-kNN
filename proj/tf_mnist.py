@@ -103,7 +103,10 @@ class Autoencoder(object):
         nca_obj = tf.reduce_sum(neighbor_psum)
 
         # Define the total loss
-        self.loss = reconstruction_error - nca_obj
+        alpha1 = tf.constant(0.9)
+        alpha2 = tf.constant(0.1)
+
+        self.loss = alpha2 * reconstruction_error - alpha1 * nca_obj
         self.nca_obj = -nca_obj
         self.reconstruction_error = reconstruction_error
 
@@ -123,8 +126,8 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    batch_size = 32
-    epochs = 50
+    batch_size = 100
+    epochs = 20
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
