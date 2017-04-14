@@ -182,7 +182,7 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess.run(tf.global_variables_initializer())
 
     batch_size = 200
-    epochs = 30
+    epochs = 100
     minimum_loss = np.inf
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
