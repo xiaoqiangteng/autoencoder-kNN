@@ -49,24 +49,38 @@ class Autoencoder(object):
         # Conv layer 1, 32 filters
         W_conv1 = weight_variable([self.kernel_size, self.kernel_size, 1, 32])
         b_conv1 = bias_variable([32])
-
         h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 
         # Conv layer 2, 64 filters
         W_conv2 = weight_variable([self.kernel_size, self.kernel_size, 32, 64])
         b_conv2 = bias_variable([64])
-
         h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
 
         # Conv layer 3, 128 filters
         W_conv3 = weight_variable([self.kernel_size, self.kernel_size, 64, 128])
         b_conv3 = bias_variable([128])
-
         h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3) + b_conv3)
+
+        # Dense layer 1, 50 hidden nodes
+        h_conv3_flatten = tf.reshape(h_conv3, [-1, 4 * 4 * 128])
+
+        W_dense_1 = weight_variable([4 * 4 * 128, 50])
+        b_dense_1 = bias_variable([50])
+        h_dense_1 = tf.nn.relu(tf.matmul(h_conv3_flatten, W_dense_1) + b_dense_1)
+
 
         # Store the encoded tensor
         # self.encoded_x = h_conv2
-        self.encoded_x = tf.reshape(h_conv3, [-1, 4 * 4 * 128])
+        # self.encoded_x = tf.reshape(h_conv3, [-1, 4 * 4 * 128])
+        self.encoded_x = h_dense_1
+
+        # Decode dense 
+        W_dense_2 = weight_variable([50, 4 * 4 * 128])
+        b_dense_2 = bias_variable([4 * 4 * 128])
+        h_dense_2 = tf.nn.relu(tf.matmul(h_dense_1, W_dense_2) + b_dense_2)
+
+        h_dense_tensor = tf.reshape(h_dense_2, [-1, 4, 4, 128])
+
 
         # Build the decoder using the same weights
         W_conv4 = W_conv3
@@ -75,7 +89,7 @@ class Autoencoder(object):
         output_shape = tf.stack([m, 
             tf.shape(h_conv2)[1], tf.shape(h_conv2)[2], tf.shape(h_conv2)[3]])
 
-        h_conv4 = tf.nn.relu(conv2d_transpose(h_conv3, W_conv4, output_shape) + b_conv4)
+        h_conv4 = tf.nn.relu(conv2d_transpose(h_dense_tensor, W_conv4, output_shape) + b_conv4)
 
 
         W_conv5 = W_conv2
@@ -156,7 +170,7 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
     auto = Autoencoder()
 
-    learning_rate = 0.0001
+    learning_rate = 0.001
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
     # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
@@ -168,7 +182,7 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess.run(tf.global_variables_initializer())
 
     batch_size = 200
-    epochs = 3
+    epochs = 15
     minimum_loss = np.inf
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
