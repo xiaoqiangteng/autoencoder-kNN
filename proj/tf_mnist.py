@@ -58,31 +58,44 @@ class Autoencoder(object):
 
         h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
 
-        # Conv layer 3, 
+        # Conv layer 3, 128 filters
+        W_conv3 = weight_variable([self.kernel_size, self.kernel_size, 64, 128])
+        b_conv3 = bias_variable([128])
+
+        h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3) + b_conv3)
 
         # Store the encoded tensor
         # self.encoded_x = h_conv2
-        self.encoded_x = tf.reshape(h_conv2, [-1, 7 * 7 * 64])
+        self.encoded_x = tf.reshape(h_conv3, [-1, 4 * 4 * 128])
 
         # Build the decoder using the same weights
-        W_conv3 = W_conv2
-        b_conv3 = bias_variable([32])
+        W_conv4 = W_conv3
+        b_conv4 = bias_variable([64])
+
+        output_shape = tf.stack([m, 
+            tf.shape(h_conv2)[1], tf.shape(h_conv2)[2], tf.shape(h_conv2)[3]])
+
+        h_conv4 = tf.nn.relu(conv2d_transpose(h_conv3, W_conv4, output_shape) + b_conv4)
+
+
+        W_conv5 = W_conv2
+        b_conv5 = bias_variable([32])
 
         output_shape = tf.stack([m, 
             tf.shape(h_conv1)[1], tf.shape(h_conv1)[2], tf.shape(h_conv1)[3]])
 
-        h_conv3 = tf.nn.relu(conv2d_transpose(h_conv2, W_conv3, output_shape) + b_conv3)
+        h_conv5 = tf.nn.relu(conv2d_transpose(h_conv4, W_conv5, output_shape) + b_conv5)
 
         # Layer 3
-        W_conv4 = W_conv1
-        b_conv4 = bias_variable([1])
+        W_conv6 = W_conv1
+        b_conv6 = bias_variable([1])
 
         output_shape = tf.stack([m, 
             tf.shape(x_image)[1], tf.shape(x_image)[2], tf.shape(x_image)[3]])
 
-        h_conv4 = tf.nn.relu(conv2d_transpose(h_conv3, W_conv4, output_shape) + b_conv4)
+        h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
 
-        self.reconstructed_x = h_conv4
+        self.reconstructed_x = h_conv6
 
         # MSE loss function
         reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
@@ -105,8 +118,8 @@ class Autoencoder(object):
         nca_obj = tf.reduce_sum(neighbor_psum)
 
         # Define the total loss
-        alpha1 = tf.constant(0.999)
-        alpha2 = tf.constant(0.001)
+        alpha1 = tf.constant(0.99)
+        alpha2 = tf.constant(0.01)
 
         self.loss = tf.negative(tf.multiply(alpha1, nca_obj)) + tf.multiply(alpha2, reconstruction_error)
         self.nca_obj = tf.negative(tf.multiply(alpha1, nca_obj))
@@ -126,24 +139,26 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     learning_rate = 0.001
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
+    # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
+
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    batch_size = 100
-    epochs = 5
+    batch_size = 200
+    epochs = 50
     minimum_loss = np.inf
     for epoch_i in range(epochs):
-        val_loss_list = []
-        rec_error_list = []
-        nca_obj_list = []
-
         for batch_i in range(train_m // batch_size):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
 
             sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
+
+        val_loss_list = []
+        rec_error_list = []
+        nca_obj_list = []
 
         for batch_i in range(validation_m // batch_size):
             batch_x, batch_y = mnist.validation.next_batch(batch_size)            
@@ -166,9 +181,31 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
     # Encode training and testing samples
     # Save the encoded tensors
-
     saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
+    # Report the loss
+    val_loss_list = []
+    rec_error_list = []
+    nca_obj_list = []
+    
+    for batch_i in range(validation_m // batch_size):
+        batch_x, batch_y = mnist.validation.next_batch(batch_size)            
+        val_loss, rec_error, nca_obj = sess.run([auto.loss, auto.reconstruction_error, auto.nca_obj], 
+                                                    feed_dict={auto.x: batch_x, auto.y: batch_y})
+        
+        val_loss_list.append(val_loss)
+        rec_error_list.append(rec_error)
+        nca_obj_list.append(nca_obj)
+
+    validation_loss = np.mean(val_loss_list)
+    reconstruction_error = np.mean(rec_error_list)
+    nca_objective = np.mean(nca_obj_list)
+
+    print("Report the best validation loss: ")
+    print(validation_loss, reconstruction_error, nca_obj)
+
+
+    # Encode the images
     encoding_train_imgs_path = './data/MNIST_encoding/tf_train.encoding'
     encoding_test_imgs_path = './data/MNIST_encoding/tf_test.encoding'
     train_labels_path = './data/MNIST_encoding/tf_train.labels'
@@ -222,6 +259,8 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     # Save the encoded imgs
     pickle.dump(encoded_test_imgs, open(encoding_test_imgs_path, 'wb'))
     pickle.dump(test_labels, open(test_labels_path, 'wb'))
+
+    print("Done encoding. Show some reconstructed images.")
 
     # Show 10 reconstructed images
     n = 32
