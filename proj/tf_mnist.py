@@ -125,7 +125,27 @@ class Autoencoder(object):
         self.nca_obj = tf.negative(tf.multiply(alpha1, nca_obj))
         self.reconstruction_error = tf.multiply(alpha2, reconstruction_error)
 
+def cal_loss(auto, sess, mnist_dataset, m, batch_size):
+    # Report the loss
+    val_loss_list = []
+    rec_error_list = []
+    nca_obj_list = []
+    
+    for batch_i in range(m // batch_size):
+        batch_x, batch_y = mnist_dataset.next_batch(batch_size)            
+        val_loss, rec_error, nca_obj = sess.run([auto.loss, auto.reconstruction_error, auto.nca_obj], 
+                                                    feed_dict={auto.x: batch_x, auto.y: batch_y})
+        
+        val_loss_list.append(val_loss)
+        rec_error_list.append(rec_error)
+        nca_obj_list.append(nca_obj)
 
+    validation_loss = np.mean(val_loss_list)
+    reconstruction_error = np.mean(rec_error_list)
+    nca_objective = np.mean(nca_obj_list)
+
+    return validation_loss, reconstruction_error, nca_obj 
+    
 
 def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     mnist = input_data.read_data_sets("MNIST_data/", one_hot=False)
@@ -136,7 +156,7 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
     auto = Autoencoder()
 
-    learning_rate = 0.001
+    learning_rate = 0.0001
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
     # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
@@ -148,7 +168,7 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess.run(tf.global_variables_initializer())
 
     batch_size = 200
-    epochs = 50
+    epochs = 3
     minimum_loss = np.inf
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
@@ -156,22 +176,9 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
             sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
-        val_loss_list = []
-        rec_error_list = []
-        nca_obj_list = []
 
-        for batch_i in range(validation_m // batch_size):
-            batch_x, batch_y = mnist.validation.next_batch(batch_size)            
-            val_loss, rec_error, nca_obj = sess.run([auto.loss, auto.reconstruction_error, auto.nca_obj], 
-                                                        feed_dict={auto.x: batch_x, auto.y: batch_y})
-            
-            val_loss_list.append(val_loss)
-            rec_error_list.append(rec_error)
-            nca_obj_list.append(nca_obj)
-
-        validation_loss = np.mean(val_loss_list)
-        reconstruction_error = np.mean(rec_error_list)
-        nca_objective = np.mean(nca_obj_list)
+        validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
+                                                            mnist.validation, validation_m, batch_size)
 
         print(epoch_i, validation_loss, reconstruction_error, nca_obj)
 
@@ -184,24 +191,8 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
     # Report the loss
-    val_loss_list = []
-    rec_error_list = []
-    nca_obj_list = []
-    
-    for batch_i in range(validation_m // batch_size):
-        batch_x, batch_y = mnist.validation.next_batch(batch_size)            
-        val_loss, rec_error, nca_obj = sess.run([auto.loss, auto.reconstruction_error, auto.nca_obj], 
-                                                    feed_dict={auto.x: batch_x, auto.y: batch_y})
-        
-        val_loss_list.append(val_loss)
-        rec_error_list.append(rec_error)
-        nca_obj_list.append(nca_obj)
-
-    validation_loss = np.mean(val_loss_list)
-    reconstruction_error = np.mean(rec_error_list)
-    nca_objective = np.mean(nca_obj_list)
-
-    print("Report the best validation loss: ")
+    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
+    print("Report the test loss of the best model: ")
     print(validation_loss, reconstruction_error, nca_obj)
 
 
@@ -291,8 +282,8 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 1
-    test_percentage = 1
+    train_percentage = 0.1
+    test_percentage = 0.1
     trial = 1
 
     cnn_nca_mnist_experiment(trial, train_percentage, test_percentage)
