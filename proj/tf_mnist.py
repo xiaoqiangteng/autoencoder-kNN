@@ -135,12 +135,12 @@ class Autoencoder(object):
         alpha1 = tf.constant(0.99)
         alpha2 = tf.constant(0.01)
 
-        self.loss = tf.negative(tf.multiply(alpha1, nca_obj / m)) + tf.multiply(alpha2, reconstruction_error / m)
+        self.loss = tf.negative(tf.multiply(alpha1, nca_obj)) + tf.multiply(alpha2, reconstruction_error)
         # self.nca_obj = tf.negative(tf.multiply(alpha1, nca_obj))
         # self.reconstruction_error = tf.multiply(alpha2, reconstruction_error)
 
-        self.nca_obj = tf.negative(nca_obj) / m
-        self.reconstruction_error = reconstruction_error / m
+        self.nca_obj = tf.negative(nca_obj)
+        self.reconstruction_error = reconstruction_error
 
 
 def cal_loss(auto, sess, mnist_dataset, m, batch_size):
@@ -175,10 +175,9 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     auto = Autoencoder()
 
     learning_rate = 0.001
-    # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
+    optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
-    optimizer_rec_error = tf.train.AdamOptimizer(learning_rate).minimize(auto.reconstruction_error)
-    optimizer_nca_obj = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
+    # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -186,45 +185,28 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    # Pre-train step
-    batch_size = 100
-    epochs = 50
+    batch_size = 200
+    epochs = 100
     minimum_loss = np.inf
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
 
-            # sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
-            sess.run(optimizer_rec_error, feed_dict={auto.x: batch_x, auto.y: batch_y})
+            sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
 
         validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
                                                             mnist.validation, validation_m, batch_size)
+
         print(epoch_i, validation_loss, reconstruction_error, nca_obj)
 
-        # if validation_loss < minimum_loss:
-        #     minimum_loss = validation_loss
-        #     save_path = saver.save(sess, "./models/tf_mnist/model.ckpt")
+        if validation_loss < minimum_loss:
+            minimum_loss = validation_loss
+            save_path = saver.save(sess, "./models/tf_mnist/model.ckpt")
 
-    # Pre-train step
-    batch_size = 5000
-    epochs = 50
-    minimum_loss = np.inf
-    for epoch_i in range(epochs):
-        for batch_i in range(train_m // batch_size):
-            batch_x, batch_y = mnist.train.next_batch(batch_size)
-
-            # sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
-            sess.run(optimizer_nca_obj, feed_dict={auto.x: batch_x, auto.y: batch_y})
-
-
-        validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
-                                                            mnist.validation, validation_m, batch_size)
-        print(epoch_i, validation_loss, reconstruction_error, nca_obj)
-
-    
+    # Encode training and testing samples
     # Save the encoded tensors
-    # saver.restore(sess, "./models/tf_mnist/model.ckpt")
+    saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
     # Report the loss
     validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
@@ -232,7 +214,6 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     print(validation_loss, reconstruction_error, nca_obj)
 
 
-    # Encode training and testing samples
     # Encode the images
     encoding_train_imgs_path = './data/MNIST_encoding/tf_train.encoding'
     encoding_test_imgs_path = './data/MNIST_encoding/tf_test.encoding'
