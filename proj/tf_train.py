@@ -34,6 +34,8 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     # Restored the pre-trained model
     saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
+    batch_size = 100
+
     # Report the loss
     validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
     print("Report the initial test loss: ")
