@@ -132,8 +132,8 @@ class Autoencoder(object):
         nca_obj = tf.reduce_sum(neighbor_psum)
 
         # Define the total loss
-        alpha1 = tf.constant(0.99)
-        alpha2 = tf.constant(0.01)
+        alpha1 = tf.constant(0.9)
+        alpha2 = tf.constant(0.1)
 
         self.loss = tf.negative(tf.multiply(alpha1, nca_obj)) + tf.multiply(alpha2, reconstruction_error)
         # self.nca_obj = tf.negative(tf.multiply(alpha1, nca_obj))
