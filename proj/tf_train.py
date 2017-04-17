@@ -21,7 +21,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
     auto = Autoencoder()
 
-    learning_rate = 0.001
+    learning_rate = 0.01
     optimizer_nca_obj = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
 
     # Add ops to save and restore all the variables.
