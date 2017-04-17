@@ -136,8 +136,12 @@ class Autoencoder(object):
         alpha2 = tf.constant(0.01)
 
         self.loss = tf.negative(tf.multiply(alpha1, nca_obj)) + tf.multiply(alpha2, reconstruction_error)
-        self.nca_obj = tf.negative(tf.multiply(alpha1, nca_obj))
-        self.reconstruction_error = tf.multiply(alpha2, reconstruction_error)
+        # self.nca_obj = tf.negative(tf.multiply(alpha1, nca_obj))
+        # self.reconstruction_error = tf.multiply(alpha2, reconstruction_error)
+
+        self.nca_obj = tf.negative(nca_obj)
+        self.reconstruction_error = reconstruction_error
+
 
 def cal_loss(auto, sess, mnist_dataset, m, batch_size):
     # Report the loss
