@@ -132,8 +132,8 @@ class Autoencoder(object):
         nca_obj = tf.reduce_sum(neighbor_psum)
 
         # Define the total loss
-        alpha1 = tf.constant(0.9)
-        alpha2 = tf.constant(0.1)
+        alpha1 = tf.constant(0.99)
+        alpha2 = tf.constant(0.01)
 
         fm = tf.cast(m, tf.float32)
 
