@@ -44,7 +44,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
     # Train step
     batch_size = 3000
-    epochs = 1
+    epochs = 5
     minimum_loss = np.inf
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
@@ -56,7 +56,14 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
                                                             mnist.validation, validation_m, batch_size)
         print(epoch_i, validation_loss, reconstruction_error, nca_obj)
 
-    # Report the loss
+        if validation_loss < minimum_loss:
+            minimum_loss = validation_loss
+            save_path = saver.save(sess, "./models/tf_train/model.ckpt")
+
+    # Restored the pre-trained model
+    saver.restore(sess, "./models/tf_train/model.ckpt")
+
+    # Report the loss    
     validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
     print("Report the test loss of the final model: ")
     print(validation_loss, reconstruction_error, nca_obj)
@@ -69,6 +76,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     train_labels_path = './data/MNIST_encoding/tf_train.labels'
     test_labels_path = './data/MNIST_encoding/tf_test.labels'
 
+    batch_size = 1000
     encoded_imgs_list = []
     labels_list = []
     for batch_i in range(train_m // batch_size):
