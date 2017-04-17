@@ -45,8 +45,8 @@ def cnn_nca_mnist_pretrain(trial, train_percentage=0.1, test_percentage=0.1):
                                                             mnist.validation, validation_m, batch_size)
         print(epoch_i, validation_loss, reconstruction_error, nca_obj)
 
-        if reconstruction_error < rec_loss:
-            rec_loss = reconstruction_error
+        if reconstruction_error < rec_error:
+            rec_error = reconstruction_error
             save_path = saver.save(sess, "./models/tf_mnist/model.ckpt")
 
     # Report the loss
