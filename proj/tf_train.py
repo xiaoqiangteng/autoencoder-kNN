@@ -34,8 +34,14 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     # Restored the pre-trained model
     saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
+    # Report the loss
+    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
+    print("Report the initial test loss: ")
+    print(validation_loss, reconstruction_error, nca_obj)
+
+
     # Train step
-    batch_size = 5000
+    batch_size = 2000
     epochs = 50
     minimum_loss = np.inf
     for epoch_i in range(epochs):
@@ -50,7 +56,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
     # Report the loss
     validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
-    print("Report the test loss of the best model: ")
+    print("Report the test loss of the final model: ")
     print(validation_loss, reconstruction_error, nca_obj)
 
 
