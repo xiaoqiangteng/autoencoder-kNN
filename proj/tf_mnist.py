@@ -42,7 +42,7 @@ class Autoencoder(object):
         # Define the labels
         self.y = tf.placeholder(tf.int8, [None])
 
-        # Cluster the sample
+        # batch size
         m = tf.shape(self.x)[0]
 
         # Build the encoder
@@ -171,9 +171,10 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     auto = Autoencoder()
 
     learning_rate = 0.001
-    optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
+    # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
-    # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
+    optimizer_rec_error = tf.train.AdamOptimizer(learning_rate).minimize(auto.reconstruction_error)
+    optimizer_nca_obj = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -181,28 +182,45 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    batch_size = 200
-    epochs = 100
+    # Pre-train step
+    batch_size = 100
+    epochs = 50
     minimum_loss = np.inf
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
 
-            sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
+            # sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
+            sess.run(optimizer_rec_error, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
 
         validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
                                                             mnist.validation, validation_m, batch_size)
-
         print(epoch_i, validation_loss, reconstruction_error, nca_obj)
 
-        if validation_loss < minimum_loss:
-            minimum_loss = validation_loss
-            save_path = saver.save(sess, "./models/tf_mnist/model.ckpt")
+        # if validation_loss < minimum_loss:
+        #     minimum_loss = validation_loss
+        #     save_path = saver.save(sess, "./models/tf_mnist/model.ckpt")
 
-    # Encode training and testing samples
+    # Pre-train step
+    batch_size = 5000
+    epochs = 50
+    minimum_loss = np.inf
+    for epoch_i in range(epochs):
+        for batch_i in range(train_m // batch_size):
+            batch_x, batch_y = mnist.train.next_batch(batch_size)
+
+            # sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
+            sess.run(optimizer_nca_obj, feed_dict={auto.x: batch_x, auto.y: batch_y})
+
+
+        validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
+                                                            mnist.validation, validation_m, batch_size)
+        print(epoch_i, validation_loss, reconstruction_error, nca_obj)
+
+    
     # Save the encoded tensors
-    saver.restore(sess, "./models/tf_mnist/model.ckpt")
+    # saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
     # Report the loss
     validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
@@ -210,6 +228,7 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     print(validation_loss, reconstruction_error, nca_obj)
 
 
+    # Encode training and testing samples
     # Encode the images
     encoding_train_imgs_path = './data/MNIST_encoding/tf_train.encoding'
     encoding_test_imgs_path = './data/MNIST_encoding/tf_test.encoding'
