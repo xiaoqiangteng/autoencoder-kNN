@@ -146,8 +146,7 @@ class Autoencoder(object):
         fm = tf.cast(m, tf.float32)
 
         negative_nca_obj = tf.negative(tf.div(nca_obj, fm))
-        # mean_rec_error = tf.div(reconstruction_error, fm)
-        mean_rec_error = reconstruction_error
+        mean_rec_error = tf.div(reconstruction_error, fm)
 
         self.loss = tf.multiply(alpha1, negative_nca_obj) + tf.multiply(alpha2, mean_rec_error)
         
