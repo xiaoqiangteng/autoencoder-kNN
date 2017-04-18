@@ -113,7 +113,8 @@ class Autoencoder(object):
         self.reconstructed_x = h_conv6
 
         # MSE loss function
-        reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
+        # reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
+        reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(x_image, self.reconstructed_x))
 
         # NCA objection function
         dx = tf.subtract(self.encoded_x[:, None], self.encoded_x[None])
