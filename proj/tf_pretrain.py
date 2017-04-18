@@ -20,7 +20,7 @@ def cnn_nca_mnist_pretrain(trial, train_percentage=0.1, test_percentage=0.1):
 
     auto = Autoencoder()
 
-    learning_rate = 0.01
+    learning_rate = 0.001
 
     optimizer_rec_error = tf.train.AdamOptimizer(learning_rate).minimize(auto.reconstruction_error)
 
