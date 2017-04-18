@@ -66,9 +66,8 @@ class Autoencoder(object):
 
         W_dense_1 = weight_variable([4 * 4 * 128, 30])
         b_dense_1 = bias_variable([30])
-        # h_dense_1 = tf.nn.relu(tf.matmul(h_conv3_flatten, W_dense_1) + b_dense_1)
-        h_dense_1 = tf.matmul(h_conv3_flatten, W_dense_1) + b_dense_1
-
+        h_dense_1 = tf.nn.sigmoid(tf.matmul(h_conv3_flatten, W_dense_1) + b_dense_1)
+        # h_dense_1 = tf.matmul(h_conv3_flatten, W_dense_1) + b_dense_1
 
         # Store the encoded tensor
         self.encoded_x = h_dense_1
@@ -76,8 +75,8 @@ class Autoencoder(object):
         # Decode dense 
         W_dense_2 = weight_variable([30, 4 * 4 * 128])
         b_dense_2 = bias_variable([4 * 4 * 128])
-        # h_dense_2 = tf.nn.relu(tf.matmul(h_dense_1, W_dense_2) + b_dense_2)
-        h_dense_2 = tf.matmul(h_dense_1, W_dense_2) + b_dense_2
+        h_dense_2 = tf.nn.relu(tf.matmul(h_dense_1, W_dense_2) + b_dense_2)
+        # h_dense_2 = tf.matmul(h_dense_1, W_dense_2) + b_dense_2
 
         h_dense_tensor = tf.reshape(h_dense_2, [-1, 4, 4, 128])
 

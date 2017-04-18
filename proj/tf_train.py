@@ -44,7 +44,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
 
     # Train step
-    batch_size = 4250
+    batch_size = 4000
     epochs = 60
     minimum_loss = np.inf
     for epoch_i in range(epochs):
