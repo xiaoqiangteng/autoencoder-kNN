@@ -54,6 +54,32 @@ def cnn_nca_mnist_pretrain(trial, train_percentage=0.1, test_percentage=0.1):
     print("Report the test loss of the best model: ")
     print(validation_loss, reconstruction_error, nca_obj)
 
+    # Show 10 reconstructed images
+    n = 10
+    x_test, _ = mnist.test.next_batch(n)
+
+    reconstructed_imgs = sess.run(auto.reconstructed_x, feed_dict={auto.x: x_test})
+
+    plt.figure(figsize=(20, 4))
+    for i in range(n):
+        # display original
+        ax = plt.subplot(2, n, i + 1)
+        plt.imshow(x_test[i].reshape(28, 28))
+        plt.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        # display reconstruction
+        ax = plt.subplot(2, n, i + 1 + n)
+
+        plt.imshow(reconstructed_imgs[i].reshape(28, 28))
+
+        plt.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    plt.savefig('./tmp/tf_mnist.png')
+
 
 def main():
     train_percentage = 1

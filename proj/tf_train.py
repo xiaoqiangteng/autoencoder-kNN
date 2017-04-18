@@ -130,32 +130,6 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
     print("Done encoding. Show some reconstructed images.")
 
-    # Show 10 reconstructed images
-    n = 32
-    x_test, _ = mnist.test.next_batch(n)
-
-    reconstructed_imgs = sess.run(auto.reconstructed_x, feed_dict={auto.x: x_test})
-
-    n = 10
-    plt.figure(figsize=(20, 4))
-    for i in range(n):
-        # display original
-        ax = plt.subplot(2, n, i + 1)
-        plt.imshow(x_test[i].reshape(28, 28))
-        plt.gray()
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-        # display reconstruction
-        ax = plt.subplot(2, n, i + 1 + n)
-
-        plt.imshow(reconstructed_imgs[i].reshape(28, 28))
-
-        plt.gray()
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    plt.savefig('./tmp/tf_mnist.png')
 
 
 def main():
