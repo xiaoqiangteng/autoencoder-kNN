@@ -69,8 +69,8 @@ class Autoencoder(object):
         h_dense_1 = tf.matmul(h_conv3_flatten, W_dense_1) + b_dense_1
 
         # Store the encoded tensor
-        # self.encoded_x = h_dense_1
-        self.encoded_x = tf.slice(h_dense_1, [0, 0], [-1, 30])
+        self.encoded_x = h_dense_1
+        # self.encoded_x = tf.slice(h_dense_1, [0, 0], [-1, 30])
 
         print(self.encoded_x.get_shape().as_list())
         print(h_dense_1.get_shape().as_list())
