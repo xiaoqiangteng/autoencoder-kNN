@@ -113,8 +113,8 @@ class Autoencoder(object):
         self.reconstructed_x = h_conv6
 
         # MSE loss function
-        # reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
-        reconstruction_error = tf.reduce_sum(tf.abs(self.reconstructed_x - x_image))
+        reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
+        # reconstruction_error = tf.reduce_sum(tf.abs(self.reconstructed_x - x_image))
         # reconstruction_error = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(labels=x_image, 
         #                                                                             logits=self.reconstructed_x))
 
