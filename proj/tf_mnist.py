@@ -81,45 +81,44 @@ class Autoencoder(object):
 
 
         # Build the decoder using the same weights
-        # W_conv4 = W_conv3
+        W_conv4 = weight_variable([self.kernel_size, self.kernel_size, 64, 128])
         b_conv4 = bias_variable([64])
 
         output_shape = tf.stack([m, 
             tf.shape(h_conv2)[1], tf.shape(h_conv2)[2], tf.shape(h_conv2)[3]])
 
-        # h_conv4 = tf.nn.relu(conv2d_transpose(h_dense_tensor, W_conv4, output_shape) + b_conv4)
-        h_conv4 = tf.nn.relu(conv2d_transpose(h_dense_tensor, W_conv3, output_shape) + b_conv4)
+        h_conv4 = tf.nn.relu(conv2d_transpose(h_dense_tensor, W_conv4, output_shape) + b_conv4)
+        # h_conv4 = tf.nn.relu(conv2d_transpose(h_dense_tensor, W_conv3, output_shape) + b_conv4)
 
-
-        # W_conv5 = W_conv2
+        W_conv5 = weight_variable([self.kernel_size, self.kernel_size, 32, 64])
         b_conv5 = bias_variable([32])
 
         output_shape = tf.stack([m, 
             tf.shape(h_conv1)[1], tf.shape(h_conv1)[2], tf.shape(h_conv1)[3]])
 
-        # h_conv5 = tf.nn.relu(conv2d_transpose(h_conv4, W_conv5, output_shape) + b_conv5)
-        h_conv5 = tf.nn.relu(conv2d_transpose(h_conv4, W_conv2, output_shape) + b_conv5)
+        h_conv5 = tf.nn.relu(conv2d_transpose(h_conv4, W_conv5, output_shape) + b_conv5)
+        # h_conv5 = tf.nn.relu(conv2d_transpose(h_conv4, W_conv2, output_shape) + b_conv5)
 
         # Layer 3
-        # W_conv6 = W_conv1
+        W_conv6 = weight_variable([self.kernel_size, self.kernel_size, 1, 32])
         b_conv6 = bias_variable([1])
 
         output_shape = tf.stack([m, 
             tf.shape(x_image)[1], tf.shape(x_image)[2], tf.shape(x_image)[3]])
 
-        # h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
-        h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv1, output_shape) + b_conv6)
+        h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
+        # h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv1, output_shape) + b_conv6)
 
         self.reconstructed_x = h_conv6
 
         # MSE loss function
         # reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
-        reconstruction_error = tf.reduce_sum(tf.abs(self.reconstructed_x - x_image))
+        # reconstruction_error = tf.reduce_sum(tf.abs(self.reconstructed_x - x_image))
         # reconstruction_error = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(labels=x_image, 
         #                                                                             logits=self.reconstructed_x))
 
-        # reconstruction_error = tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
-        #                                                             logits=self.reconstructed_x)
+        reconstruction_error = tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
+                                                                    logits=self.reconstructed_x)
 
 
         # NCA objection function
