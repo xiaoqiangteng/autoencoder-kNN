@@ -72,6 +72,9 @@ class Autoencoder(object):
         # self.encoded_x = h_dense_1
         self.encoded_x = tf.slice(h_dense_1, [0, 0], [-1, 30])
 
+        print(self.encoded_x.get_shape().as_list())
+        print(h_dense_1.get_shape().as_list())
+
         # Decode dense 
         W_dense_2 = weight_variable([50, 4 * 4 * 128])
         b_dense_2 = bias_variable([4 * 4 * 128])
