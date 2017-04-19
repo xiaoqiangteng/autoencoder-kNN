@@ -144,7 +144,7 @@ class Autoencoder(object):
         # Define the total loss
         alpha1 = tf.constant(0.99)
         alpha2 = tf.constant(0.01)
-        self.loss = tf.multiply(alpha1, negative_nca_obj) + tf.multiply(alpha2, mean_rec_error)
+        self.loss = tf.multiply(alpha1, self.nca_obj) + tf.multiply(alpha2, self.reconstruction_error)
 
 
 def cal_loss(auto, sess, mnist_dataset, m, batch_size):
