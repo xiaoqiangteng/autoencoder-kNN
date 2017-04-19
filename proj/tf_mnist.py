@@ -61,22 +61,22 @@ class Autoencoder(object):
         b_conv3 = bias_variable([128])
         h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3) + b_conv3)
 
-        # Dense layer 1, 50 hidden nodes
+        # Dense layer 1, 30 hidden nodes
         h_conv3_flatten = tf.reshape(h_conv3, [-1, 4 * 4 * 128])
 
-        W_dense_1 = weight_variable([4 * 4 * 128, 50])
-        b_dense_1 = bias_variable([50])
+        W_dense_1 = weight_variable([4 * 4 * 128, 30])
+        b_dense_1 = bias_variable([30])
         h_dense_1 = tf.matmul(h_conv3_flatten, W_dense_1) + b_dense_1
 
         # Store the encoded tensor
-        # self.encoded_x = h_dense_1
-        self.encoded_x = tf.slice(h_dense_1, [0, 0], [-1, 30])
+        self.encoded_x = h_dense_1
+        # self.encoded_x = tf.slice(h_dense_1, [0, 0], [-1, 30])
 
         print(self.encoded_x.get_shape().as_list())
         print(h_dense_1.get_shape().as_list())
 
         # Decode dense 
-        W_dense_2 = weight_variable([50, 4 * 4 * 128])
+        W_dense_2 = weight_variable([30, 4 * 4 * 128])
         b_dense_2 = bias_variable([4 * 4 * 128])
         h_dense_2 = tf.matmul(h_dense_1, W_dense_2) + b_dense_2
 

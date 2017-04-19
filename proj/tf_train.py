@@ -21,7 +21,6 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     auto = Autoencoder()
 
     learning_rate = 0.001
-    # optimizer_nca_obj = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
     # Add ops to save and restore all the variables.
@@ -44,7 +43,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
     # Train step
     batch_size = 4000
-    epochs = 60
+    epochs = 150
     minimum_loss = np.inf
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
