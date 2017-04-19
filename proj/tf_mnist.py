@@ -117,6 +117,9 @@ class Autoencoder(object):
         # reconstruction_error = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(labels=x_image, 
         #                                                                             logits=self.reconstructed_x))
 
+        tmp = tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, logits=self.reconstructed_x)
+        print(tmp.get_shape().as_list())
+
         reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
                                                                     logits=self.reconstructed_x))
 
@@ -183,6 +186,8 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     validation_m = mnist.validation.num_examples
 
     auto = Autoencoder()
+
+    return
 
     learning_rate = 0.001
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
