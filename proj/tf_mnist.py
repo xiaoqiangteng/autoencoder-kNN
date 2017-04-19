@@ -107,17 +107,17 @@ class Autoencoder(object):
         output_shape = tf.stack([m, 
             tf.shape(x_image)[1], tf.shape(x_image)[2], tf.shape(x_image)[3]])
 
-        h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
+        # h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
+        h_conv6 = tf.nn.sigmoid(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
 
         self.reconstructed_x = h_conv6
-        # reconstructed_x_flatten = tf.reshape(h_conv6, [-1, 28 * 28])
+        reconstructed_x_flatten = tf.reshape(h_conv6, [-1, 28 * 28])
 
         # loss function
-        reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
-                                                                    logits=self.reconstructed_x))
+        # reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
+        #                                                             logits=self.reconstructed_x))
 
-        # reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.x, 
-        #                                                             logits=reconstructed_x_flatten), 1)
+        reconstruction_error = tf.negative(tf.reduce_sum(self.x * tf.log(reconstructed_x_flatten + 1e-10) + (1 - self.x) * tf.log(1 - reconstructed_x_flatten + 1e-10)))
 
         # NCA objection function
         dx = tf.subtract(self.encoded_x[:, None], self.encoded_x[None])
