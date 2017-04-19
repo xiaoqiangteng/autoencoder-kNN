@@ -48,8 +48,6 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
-
-            # sess.run(optimizer_nca_obj, feed_dict={auto.x: batch_x, auto.y: batch_y})
             sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
         validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 

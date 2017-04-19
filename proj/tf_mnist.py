@@ -187,8 +187,6 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     learning_rate = 0.001
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
 
-    # optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.nca_obj)
-
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
 
@@ -201,13 +199,10 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     for epoch_i in range(epochs):
         for batch_i in range(train_m // batch_size):
             batch_x, batch_y = mnist.train.next_batch(batch_size)
-
             sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
-
 
         validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
                                                             mnist.validation, validation_m, batch_size)
-
         print(epoch_i, validation_loss, reconstruction_error, nca_obj)
 
         if validation_loss < minimum_loss:
