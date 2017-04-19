@@ -110,15 +110,14 @@ class Autoencoder(object):
         h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
 
         self.reconstructed_x = h_conv6
-        reconstructed_x_flatten = tf.reshape(h_conv6, [-1, 28 * 28])
+        # reconstructed_x_flatten = tf.reshape(h_conv6, [-1, 28 * 28])
 
         # loss function
-        # reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
-        #                                                             logits=self.reconstructed_x))
+        reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
+                                                                    logits=self.reconstructed_x))
 
-        reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.x, 
-                                                                    logits=reconstructed_x_flatten), 1)
-        self.reconstruction_error = tf.reduce_mean(reconstruction_error)
+        # reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.x, 
+        #                                                             logits=reconstructed_x_flatten), 1)
 
         # NCA objection function
         dx = tf.subtract(self.encoded_x[:, None], self.encoded_x[None])
@@ -140,6 +139,7 @@ class Autoencoder(object):
         fm = tf.cast(m, tf.float32)
 
         self.nca_obj = tf.negative(tf.div(nca_obj, fm))
+        self.reconstruction_error = tf.div(reconstruction_error, fm)
 
         # Define the total loss
         alpha1 = tf.constant(0.99)
