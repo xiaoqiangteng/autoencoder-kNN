@@ -107,6 +107,8 @@ class Autoencoder(object):
         output_shape = tf.stack([m, 
             tf.shape(x_image)[1], tf.shape(x_image)[2], tf.shape(x_image)[3]])
 
+        print(output_shape)
+
         h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
 
         self.reconstructed_x = h_conv6
