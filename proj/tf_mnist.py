@@ -107,26 +107,18 @@ class Autoencoder(object):
         output_shape = tf.stack([m, 
             tf.shape(x_image)[1], tf.shape(x_image)[2], tf.shape(x_image)[3]])
 
-        print(output_shape)
-
         h_conv6 = tf.nn.relu(conv2d_transpose(h_conv5, W_conv6, output_shape) + b_conv6)
 
         self.reconstructed_x = h_conv6
+        reconstructed_x_flatten = tf.reshape(h_conv6, [-1, 28 * 28])
 
-        # MSE loss function
-        # reconstruction_error = tf.reduce_sum(tf.square(self.reconstructed_x - x_image))
-        # reconstruction_error = tf.reduce_sum(tf.abs(self.reconstructed_x - x_image))
-        # reconstruction_error = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(labels=x_image, 
-        #                                                                             logits=self.reconstructed_x))
+        # loss function
+        # reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
+        #                                                             logits=self.reconstructed_x))
 
-        tmp = tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, logits=self.reconstructed_x)
-        print(tmp.get_shape().as_list())
-
-        reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=x_image, 
-                                                                    logits=self.reconstructed_x))
-
-
-        print(reconstruction_error.get_shape().as_list())
+        reconstruction_error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.x, 
+                                                                    logits=reconstructed_x_flatten), 1)
+        self.reconstruction_error = tf.reduce_mean(reconstruction_error)
 
         # NCA objection function
         dx = tf.subtract(self.encoded_x[:, None], self.encoded_x[None])
@@ -145,19 +137,14 @@ class Autoencoder(object):
 
         nca_obj = tf.reduce_sum(neighbor_psum)
 
+        fm = tf.cast(m, tf.float32)
+
+        self.nca_obj = tf.negative(tf.div(nca_obj, fm))
+
         # Define the total loss
         alpha1 = tf.constant(0.99)
         alpha2 = tf.constant(0.01)
-
-        fm = tf.cast(m, tf.float32)
-
-        negative_nca_obj = tf.negative(tf.div(nca_obj, fm))
-        mean_rec_error = tf.div(reconstruction_error, fm)
-
         self.loss = tf.multiply(alpha1, negative_nca_obj) + tf.multiply(alpha2, mean_rec_error)
-        
-        self.nca_obj = negative_nca_obj
-        self.reconstruction_error = mean_rec_error
 
 
 def cal_loss(auto, sess, mnist_dataset, m, batch_size):
@@ -190,8 +177,6 @@ def cnn_nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     validation_m = mnist.validation.num_examples
 
     auto = Autoencoder()
-
-    return
 
     learning_rate = 0.001
     optimizer_loss = tf.train.AdamOptimizer(learning_rate).minimize(auto.loss)
