@@ -124,6 +124,8 @@ class Autoencoder(object):
                                                                     logits=self.reconstructed_x))
 
 
+        print(reconstruction_error.get_shape().as_list())
+
         # NCA objection function
         dx = tf.subtract(self.encoded_x[:, None], self.encoded_x[None])
         masks = tf.equal(self.y[:, None], self.y[None])
