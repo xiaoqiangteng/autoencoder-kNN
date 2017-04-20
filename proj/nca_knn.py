@@ -75,8 +75,8 @@ def nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 0.05
-    test_percentage = 0.05
+    train_percentage = 0.01
+    test_percentage = 0.01
     trial = 1
 
     nca_mnist_experiment(trial, train_percentage, test_percentage)
