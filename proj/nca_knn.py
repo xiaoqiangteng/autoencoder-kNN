@@ -45,13 +45,24 @@ def nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
     print(X_test.shape)
     print(y_test.shape)
 
+    knn = kNN()
+    k_valus = [1, 3, 5, 7]
+    for k in k_valus:
+        knn.k = k
+
+        acc_list = []
+        for _ in range(trial):
+            acc = knn.evaluate(X, y, X_test, y_test)
+            acc_list.append(acc)
+
+        print(np.mean(np.array(acc_list)))
+
+
     nca = NCA(max_iter=100, learning_rate=0.01)
     nca.fit(X, y)
     x_train = nca.transform()
     x_test = nca.transform(X_test)
 
-    knn = kNN()
-    k_valus = [1, 3, 5, 7]
     for k in k_valus:
         knn.k = k
 
@@ -64,8 +75,8 @@ def nca_mnist_experiment(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 0.1
-    test_percentage = 0.1
+    train_percentage = 0.05
+    test_percentage = 0.05
     trial = 1
 
     nca_mnist_experiment(trial, train_percentage, test_percentage)
