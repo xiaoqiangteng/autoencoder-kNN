@@ -1,8 +1,9 @@
 __author__ = 'Jinyi Zhang'
 
+import pickle
+
 import numpy as np
-from scipy.sparse import csr_matrix
-from metric_learn import NCA, LMNN
+from metric_learn import NCA
 
 from knn import kNN
 
