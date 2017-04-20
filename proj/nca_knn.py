@@ -1,6 +1,7 @@
 __author__ = 'Jinyi Zhang'
 
 import pickle
+import random
 
 import numpy as np
 from metric_learn import NCA
