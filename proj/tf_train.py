@@ -33,38 +33,38 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     # Restored the pre-trained model
     saver.restore(sess, "./models/tf_mnist/model.ckpt")
 
-    batch_size = 100
+    # batch_size = 100
 
-    # Report the loss
-    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
-    print("Report the initial test loss: ")
-    print(validation_loss, reconstruction_error, nca_obj)
+    # # Report the loss
+    # validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
+    # print("Report the initial test loss: ")
+    # print(validation_loss, reconstruction_error, nca_obj)
 
 
-    # Train step
-    batch_size = 4000
-    epochs = 100
-    minimum_loss = np.inf
-    for epoch_i in range(epochs):
-        for batch_i in range(train_m // batch_size):
-            batch_x, batch_y = mnist.train.next_batch(batch_size)
-            sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
+    # # Train step
+    # batch_size = 4000
+    # epochs = 100
+    # minimum_loss = np.inf
+    # for epoch_i in range(epochs):
+    #     for batch_i in range(train_m // batch_size):
+    #         batch_x, batch_y = mnist.train.next_batch(batch_size)
+    #         sess.run(optimizer_loss, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
-        validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
-                                                            mnist.validation, validation_m, batch_size)
-        print(epoch_i, validation_loss, reconstruction_error, nca_obj)
+    #     validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, 
+    #                                                         mnist.validation, validation_m, batch_size)
+    #     print(epoch_i, validation_loss, reconstruction_error, nca_obj)
 
-        if validation_loss < minimum_loss:
-            minimum_loss = validation_loss
-            save_path = saver.save(sess, "./models/tf_train/model.ckpt")
+    #     if validation_loss < minimum_loss:
+    #         minimum_loss = validation_loss
+    #         save_path = saver.save(sess, "./models/tf_train/model.ckpt")
 
-    # Restored the pre-trained model
-    saver.restore(sess, "./models/tf_train/model.ckpt")
+    # # Restored the pre-trained model
+    # saver.restore(sess, "./models/tf_train/model.ckpt")
 
-    # Report the loss    
-    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
-    print("Report the test loss of the final model: ")
-    print(validation_loss, reconstruction_error, nca_obj)
+    # # Report the loss    
+    # validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
+    # print("Report the test loss of the final model: ")
+    # print(validation_loss, reconstruction_error, nca_obj)
 
 
     # Encode training and testing samples
