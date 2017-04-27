@@ -129,6 +129,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
     n = 10
     x_test, _ = mnist.test.next_batch(n)
+    reconstructed_imgs = sess.run(auto.reconstructed_x, feed_dict={auto.x: x_test})
 
     plt.figure(figsize=(20, 4))
     for i in range(n):
