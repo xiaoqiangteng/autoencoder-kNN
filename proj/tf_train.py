@@ -4,6 +4,7 @@ import os
 import pickle
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
@@ -125,6 +126,26 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     pickle.dump(test_labels, open(test_labels_path, 'wb'))
 
     print("Done encoding. Show some reconstructed images.")
+
+    plt.figure(figsize=(20, 4))
+    for i in range(n):
+        # display original
+        ax = plt.subplot(2, n, i + 1)
+        plt.imshow(x_test[i].reshape(28, 28))
+        plt.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        # display reconstruction
+        ax = plt.subplot(2, n, i + 1 + n)
+
+        plt.imshow(reconstructed_imgs[i].reshape(28, 28))
+
+        plt.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    plt.savefig('./tmp/tf_nca_mnist.png')
 
 
 
