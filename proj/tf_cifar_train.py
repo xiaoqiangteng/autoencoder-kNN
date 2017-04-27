@@ -14,7 +14,7 @@ from tf_cifar import cal_loss
 from cifar import CifarPreprocess
 from cifar import reshape_cifar
 
-def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
+def cnn_nca_cifar_train():
     cp = CifarPreprocess()
 
     batchs = [1, 2, 3, 4, 5]
@@ -55,7 +55,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     batch_size = 1000
 
     # Report the loss
-    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
+    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, x_test, y_test, batch_size)
     print("Report the initial test loss: ")
     print(validation_loss, reconstruction_error, nca_obj)
 
@@ -94,7 +94,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
     saver.restore(sess, "./models/tf_cifar_train/model.ckpt")
 
     # Report the loss    
-    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, mnist.test, test_m, batch_size)
+    validation_loss, reconstruction_error, nca_obj = cal_loss(auto, sess, x_test, y_test, batch_size)
     print("Report the test loss of the final model: ")
     print(validation_loss, reconstruction_error, nca_obj)
 
@@ -132,8 +132,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
         sel = index_list[i * batch_size:(i + 1) * batch_size]
         batch_x = x_train[sel]
         batch_y = y_train[sel]
-
-        batch_x, batch_y = mnist.validation.next_batch(batch_size)            
+        
         encoded_batches = sess.run(auto.encoded_x, feed_dict={auto.x: batch_x, auto.y: batch_y})
 
         encoded_imgs_list.append(encoded_batches)
@@ -208,11 +207,7 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
 
 def main():
-    train_percentage = 1
-    test_percentage = 1
-    trial = 1
-
-    cnn_nca_mnist_train(trial, train_percentage, test_percentage)
+    cnn_nca_cifar_train()
     
     import gc
     gc.collect()
