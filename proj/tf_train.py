@@ -127,6 +127,9 @@ def cnn_nca_mnist_train(trial, train_percentage=0.1, test_percentage=0.1):
 
     print("Done encoding. Show some reconstructed images.")
 
+    n = 10
+    x_test, _ = mnist.test.next_batch(n)
+
     plt.figure(figsize=(20, 4))
     for i in range(n):
         # display original
