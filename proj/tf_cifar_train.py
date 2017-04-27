@@ -62,7 +62,7 @@ def cnn_nca_cifar_train():
 
 
     # Train step
-    batch_size = 1500
+    batch_size = 1000
     epochs = 1
     minimum_loss = np.inf
 
