@@ -2,6 +2,7 @@ __author__ = 'Jinyi Zhang'
 
 import os
 import pickle
+import random
 
 import numpy as np
 import matplotlib.pyplot as plt
