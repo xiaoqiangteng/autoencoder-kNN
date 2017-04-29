@@ -1,1 +1,0 @@
-CNN saved model for CIFAR-10 data.
