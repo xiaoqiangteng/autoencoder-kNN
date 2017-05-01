@@ -15,23 +15,23 @@ In this project, I aim to learn a non-linear encoding function that projects ima
 
 ## Scripts 
 1. cae_mnist.py
-..* A tensorflow implementation of Contractive autoencoder for comparison.
+  * A tensorflow implementation of Contractive autoencoder for comparison.
 2. cnn_mnist.py
-..* A keras implementation of Convolutional autoencoder for comparison.
+  * A keras implementation of Convolutional autoencoder for comparison.
 3. knn.py
-..* A vector implementation of KNN algorithm. A large memory is needed if traning on the whole dataset.
+  * A vector implementation of KNN algorithm. A large memory is needed if traning on the whole dataset.
 4. nca_knn.py
-..* Learn a linear transformation in order to improve KNN accuracy. Require too much memory in practical.
+  * Learn a linear transformation in order to improve KNN accuracy. Require too much memory in practical.
 5. pca.py
-..* Show PCA and CNN-NCA compressed data points in 2D respectively.
+  * Show PCA and CNN-NCA compressed data points in 2D respectively.
 6. setup.py
-..* Setup the current directory for running these scripts.
+  * Setup the current directory for running these scripts.
 7. tf_mnist.py
-..* A tensorflow implementation of CNN-NCA.
+  * A tensorflow implementation of CNN-NCA.
 8. tf_pretrain.py
-..* Pretrain the model to learn a good representation.
+  * Pretrain the model to learn a good representation.
 9. tf_train.py
-..* Fine-tune the model to favor KNN algorithm. 
+  * Fine-tune the model to favor KNN algorithm. 
 
 ## How to run
 ```
