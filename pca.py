@@ -32,8 +32,8 @@ def pixel_space():
     show_pca(X, y, 'pca_pixel.png')
 
 def feature_space():
-    encoding_test_imgs_path = './data/MNIST_encoding/2_encoding/tf_test.encoding'
-    test_labels_path = './data/MNIST_encoding/2_encoding/tf_test.labels'
+    encoding_test_imgs_path = './data/MNIST_encoding/tf_test.encoding'
+    test_labels_path = './data/MNIST_encoding/tf_test.labels'
 
     encoding_test = pickle.load(open(encoding_test_imgs_path, 'rb'))
     test_labels = pickle.load(open(test_labels_path, 'rb'))
